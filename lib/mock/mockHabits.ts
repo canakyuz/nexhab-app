@@ -1,0 +1,52 @@
+const mockHabits = [
+    {
+        id: 1,
+        name: 'Morning Walk',
+        description: 'Take a 20-minute walk around the neighborhood',
+        color: '#10B981',
+        icon: 'figure.walk',
+        streak: 12,
+        completedToday: true,
+        frequency: 'daily',
+        weeklyProgress: [1, 1, 0, 1, 1, 1, 0], // Last 7 days
+        category: 'Health',
+    },
+    {
+        id: 2,
+        name: 'Learn Norwegian',
+        description: 'Study Norwegian for 30 minutes with Duolingo',
+        color: '#8B5CF6',
+        icon: 'book.fill',
+        streak: 8,
+        completedToday: false,
+        frequency: 'daily',
+        weeklyProgress: [1, 1, 1, 0, 1, 1, 0],
+        category: 'Learning',
+    },
+    {
+        id: 3,
+        name: 'Push-ups',
+        description: 'Complete 20 push-ups every morning',
+        color: '#F59E0B',
+        icon: 'figure.strengthtraining.traditional',
+        streak: 5,
+        completedToday: true,
+        frequency: 'daily',
+        weeklyProgress: [0, 1, 1, 1, 1, 1, 0],
+        category: 'Fitness',
+    },
+    {
+        id: 4,
+        name: 'Meditation',
+        description: 'Practice mindfulness for 10 minutes',
+        color: '#EF4444',
+        icon: 'leaf.fill',
+        streak: 15,
+        completedToday: false,
+        frequency: 'daily',
+        weeklyProgress: [1, 1, 1, 1, 0, 1, 1],
+        category: 'Wellness',
+    },
+];
+
+export default mockHabits;
