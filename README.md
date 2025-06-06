@@ -48,3 +48,32 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+# Nexhab UI Kütüphanesi (Kopyala-Yapıştır Kullanım)
+
+Bu projede, UI componentleri ve sabitler taşınabilir şekilde düzenlenmiştir.
+
+## Kullanım
+
+1. `components` ve `constants` klasörlerini yeni projenize kopyalayın.
+2. Proje köküne aşağıdaki gibi bir `jsconfig.json` (veya TypeScript için `tsconfig.json`) ekleyin:
+
+```json
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    }
+  }
+}
+```
+
+3. Artık component ve sabitleri aşağıdaki gibi kullanabilirsiniz:
+
+```js
+import { Colors, Spacing } from '@/constants';
+import { Button, Card } from '@/components/ui';
+```
+
+> Not: Bu klasörler sadece UI ve sabitler içindir. Proje özelinde başka bağımlılık olmamalıdır.

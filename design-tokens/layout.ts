@@ -2,7 +2,7 @@
  * Layout constants for consistent positioning and structure across the app
  */
 
-export const Layout = {
+export const layout = {
     // Z-index values for proper layering
     zIndex: {
         base: 0,

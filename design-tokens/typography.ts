@@ -117,4 +117,8 @@ export const Typography = {
             lineHeight: 22,
         },
     },
+
+    progressTitle: { fontSize: 18, fontWeight: '700' },
+    progressValue: { fontSize: 18, fontWeight: '700' },
+    progressLabel: { fontSize: 13, fontWeight: '400' },
 } as const;

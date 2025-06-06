@@ -7,6 +7,25 @@ const tintColorLight = '#0a7ea4';
 const tintColorDark = '#fff';
 
 export const Colors = {
+  // Temel renkler (her temada aynı)
+  primary: '#0a7ea4',
+  secondary: '#FFB300',
+  gray: '#6B7280',
+  lightGray: '#ECEDEE',
+  darkGray: '#151718',
+  white: '#FFFFFF',
+  black: '#000000',
+  input: '#F2F2F2',
+  error: '#FF5252',
+  success: '#22C55E',
+  warning: '#F59E0B',
+  progressGreen: '#22C55E',
+  progressBlue: '#0EA5E9',
+  progressYellow: '#F59E0B',
+  divider: '#E5E7EB',
+  text: '#11181C',
+
+  // Tema bazlı renkler
   light: {
     text: '#11181C',
     background: '#F2F2F2',
