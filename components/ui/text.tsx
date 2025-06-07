@@ -3,6 +3,9 @@ import * as React from 'react';
 import { Text as RNText } from 'react-native';
 import { cn } from '~/lib/utils';
 
+// We use `React.createContext` rather than `nativewind` because
+// we don't want to enforce the installation of `nativewind` if the user
+// is only using core components.
 const TextClassContext = React.createContext<string | undefined>(undefined);
 
 function Text({

@@ -5,23 +5,29 @@ import { TextClassContext } from '~/components/ui/text';
 import { cn } from '~/lib/utils';
 
 const buttonVariants = cva(
-  'group flex items-center justify-center rounded-md web:ring-offset-background web:transition-colors web:focus-visible:outline-none web:focus-visible:ring-2 web:focus-visible:ring-ring web:focus-visible:ring-offset-2',
+  'group flex items-center justify-center web:ring-offset-background web:transition-colors web:focus-visible:outline-none web:focus-visible:ring-2 web:focus-visible:ring-ring web:focus-visible:ring-offset-2',
   {
     variants: {
       variant: {
-        default: 'bg-primary web:hover:opacity-90 active:opacity-90',
-        destructive: 'bg-destructive web:hover:opacity-90 active:opacity-90',
+        default: 'bg-primary shadow-md shadow-primary/20 web:hover:opacity-90 active:opacity-90 rounded-xl',
+        destructive: 'bg-destructive shadow-md shadow-destructive/20 web:hover:opacity-90 active:opacity-90 rounded-xl',
         outline:
-          'border border-input bg-background web:hover:bg-accent web:hover:text-accent-foreground active:bg-accent',
-        secondary: 'bg-secondary web:hover:opacity-80 active:opacity-80',
+          'border border-input bg-background shadow-sm web:hover:bg-accent web:hover:text-accent-foreground active:bg-accent rounded-xl',
+        secondary: 'bg-secondary shadow-sm web:hover:opacity-80 active:opacity-80 rounded-xl',
         ghost: 'web:hover:bg-accent web:hover:text-accent-foreground active:bg-accent',
         link: 'web:underline-offset-4 web:hover:underline web:focus:underline',
+        rounded: 'bg-primary shadow-md shadow-primary/20 web:hover:opacity-90 active:opacity-90 rounded-full',
+        success: 'bg-success shadow-md shadow-success/20 web:hover:opacity-90 active:opacity-90 rounded-full',
+        warning: 'bg-warning shadow-md shadow-warning/20 web:hover:opacity-90 active:opacity-90 rounded-full',
+        destructiveRounded: 'bg-destructive shadow-md shadow-destructive/20 web:hover:opacity-90 active:opacity-90 rounded-full',
       },
       size: {
-        default: 'h-10 px-4 py-2 native:h-12 native:px-5 native:py-3',
-        sm: 'h-9 rounded-md px-3',
-        lg: 'h-11 rounded-md px-8 native:h-14',
-        icon: 'h-10 w-10',
+        default: 'h-12 px-5 py-3 native:h-14 native:px-6 native:py-4',
+        sm: 'h-10 px-4 py-2',
+        lg: 'h-14 px-8 py-3 native:h-16 native:px-10 native:py-4',
+        icon: 'h-12 w-12',
+        circle: 'h-14 w-14',
+        fab: 'h-16 w-16',
       },
     },
     defaultVariants: {
@@ -32,7 +38,7 @@ const buttonVariants = cva(
 );
 
 const buttonTextVariants = cva(
-  'web:whitespace-nowrap text-sm native:text-base font-medium text-foreground web:transition-colors',
+  'web:whitespace-nowrap text-base native:text-lg font-semibold text-foreground web:transition-colors',
   {
     variants: {
       variant: {
@@ -42,12 +48,18 @@ const buttonTextVariants = cva(
         secondary: 'text-secondary-foreground group-active:text-secondary-foreground',
         ghost: 'group-active:text-accent-foreground',
         link: 'text-primary group-active:underline',
+        rounded: 'text-primary-foreground',
+        success: 'text-success-foreground',
+        warning: 'text-warning-foreground',
+        destructiveRounded: 'text-destructive-foreground',
       },
       size: {
         default: '',
-        sm: '',
-        lg: 'native:text-lg',
+        sm: 'text-sm native:text-base',
+        lg: 'text-lg native:text-xl',
         icon: '',
+        circle: '',
+        fab: 'text-xl',
       },
     },
     defaultVariants: {

@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Home, Calendar, ListTodo, User } from 'lucide-react-native';
+import { Platform } from 'react-native';
 
 export default function TabsLayout() {
   return (
@@ -7,9 +8,13 @@ export default function TabsLayout() {
       screenOptions={{
         tabBarActiveTintColor: '#0284c7', // sky-600
         tabBarInactiveTintColor: '#64748b', // slate-500
-        tabBarStyle: {
-          position: 'absolute',
-        },
+        tabBarStyle: Platform.select({
+          ios: {
+            // Use a transparent background on iOS to show the blur effect
+            position: 'absolute',
+          },
+          default: {},
+        }),
       }}>
       <Tabs.Screen
         name="index"

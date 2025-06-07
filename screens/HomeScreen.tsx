@@ -1,19 +1,26 @@
-import React, { useEffect } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, ImageBackground, Dimensions } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Dimensions, StatusBar, ImageBackground } from 'react-native';
 import { useHabitStore } from '../lib/store/habitStore';
 import { useTaskStore } from '../lib/store/taskStore';
 import { useStatsStore } from '../lib/store/statsStore';
-import { getTodayDate } from '../lib/utils';
-import { TrendingUp, CheckCircle2, Plus, Calendar, ChevronRight } from 'lucide-react-native';
-import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
+import { getTodayDate, getMonthName } from '../lib/utils';
+import { Bell, Calendar, Plus, User } from 'lucide-react-native';
+import Animated, { FadeInDown, FadeInRight, FadeIn } from 'react-native-reanimated';
+import { HabitCard } from '../components/HabitCard';
+import { ChallengeCard } from '../components/ChallengeCard';
+import { DailyProgressCard } from '../components/DailyProgressCard';
+import { DateSelector, generateWeekDays } from '../components/DateSelector';
 
 const { width } = Dimensions.get('window');
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
+// Ana ekran bileşeni
 export default function HomeScreen() {
   const { habits, fetchHabits } = useHabitStore();
   const { tasks, fetchTasks } = useTaskStore();
   const { stats, fetchTodayStats } = useStatsStore();
+  const [selectedDay, setSelectedDay] = useState<number>(new Date().getDate());
+  const [weekDays, setWeekDays] = useState(generateWeekDays());
 
   useEffect(() => {
     fetchHabits();
@@ -44,180 +51,183 @@ export default function HomeScreen() {
     month: 'long',
   });
 
+  // İlerleme hesapla
+  const totalItems = todaysHabits.length + todaysTasks.length;
+  const completedItems = habits.filter(h => h.completedToday).length + tasks.filter(t => t.completed).length;
+  const progressPercentage = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
+
+  const handleSelectDay = (day: any) => {
+    setSelectedDay(day.day);
+    // TODO: Seçilen güne göre alışkanlıkları ve görevleri güncelle
+  };
+
+  // Örnek meydan okuma verileri
+  const challenges = [
+    {
+      id: '1',
+      title: 'En İyi Koşucular! 🏃',
+      timeLeft: '5 gün 13 saat kaldı',
+      progress: 30,
+      friendsJoined: [
+        { id: 'user1', avatar: 'A' },
+        { id: 'user2', avatar: 'B' },
+      ]
+    }
+  ];
+
+  // Örnek alışkanlık verileri
+  const habitData = [
+    {
+      id: '1',
+      title: 'Su iç',
+      iconName: '💧',
+      progress: 25,
+      goal: '500/2000 ML',
+      friends: [
+        { id: 'user1', avatar: 'A' },
+        { id: 'user2', avatar: 'B' },
+        { id: 'user3', avatar: 'C' },
+      ]
+    },
+    {
+      id: '2',
+      title: 'Yürüyüş',
+      iconName: '🏃‍♂️',
+      progress: 0,
+      goal: '0/10000 ADIM',
+      friends: [
+        { id: 'user1', avatar: 'A' },
+        { id: 'user2', avatar: 'B' },
+      ]
+    },
+    {
+      id: '3',
+      title: 'Bitkileri Sula',
+      iconName: '🪴',
+      progress: 0,
+      goal: '0/1 KEZ',
+      friends: []
+    },
+    {
+      id: '4',
+      title: 'Meditasyon',
+      iconName: '🧘‍♂️',
+      progress: 100,
+      goal: '30/30 DAKİKA',
+      completed: true,
+      friends: [
+        { id: 'user1', avatar: 'A' },
+      ]
+    },
+  ];
+
   return (
-    <ScrollView style={styles.container}>
-      {/* Başlık ve Tarih Bölümü */}
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Üst Kısım - Selamlama */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.greeting}>Merhaba 👋</Text>
-          <Text style={styles.date}>{formattedDate}</Text>
+          <Text style={styles.greeting}>Merhaba, Mert 👋</Text>
+          <Text style={styles.subtitle}>Alışkanlıkları birlikte oluşturalım!</Text>
+        </View>
+        <View style={styles.iconRow}>
+          <TouchableOpacity style={styles.iconButton}>
+            <Calendar size={22} color="hsl(var(--muted-foreground))" />
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.iconButton, styles.notificationButton]}>
+            <Bell size={22} color="hsl(var(--muted-foreground))" />
+            <View style={styles.notificationBadge} />
+          </TouchableOpacity>
         </View>
       </View>
 
-      {/* İstatistikler */}
-      <Animated.View 
-        style={styles.statsContainer}
-        entering={FadeInDown.delay(100).springify()}
-      >
-        {stats ? (
-          <View style={styles.statsContent}>
-            <View style={styles.statItem}>
-              <View style={styles.statIcon}>
-                <TrendingUp size={18} color="#fff" />
-              </View>
-              <View>
-                <Text style={styles.statValue}>{stats.completedHabits}</Text>
-                <Text style={styles.statLabel}>Alışkanlık</Text>
-              </View>
-            </View>
-            
-            <View style={styles.statDivider} />
-            
-            <View style={styles.statItem}>
-              <View style={[styles.statIcon, styles.taskIcon]}>
-                <Calendar size={18} color="#fff" />
-              </View>
-              <View>
-                <Text style={styles.statValue}>{stats.completedTasks}</Text>
-                <Text style={styles.statLabel}>Görev</Text>
-              </View>
-            </View>
-            
-            <View style={styles.statDivider} />
-            
-            <View style={styles.statItem}>
-              <View style={[styles.statIcon, styles.streakIcon]}>
-                <CheckCircle2 size={18} color="#fff" />
-              </View>
-              <View>
-                <Text style={styles.statValue}>{stats.streakDays}</Text>
-                <Text style={styles.statLabel}>Seri Gün</Text>
-              </View>
-            </View>
+      {/* Sekme Seçici */}
+      <View style={styles.tabContainer}>
+        <TouchableOpacity style={[styles.tab, styles.activeTab]}>
+          <Text style={styles.activeTabText}>Bugün</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tab}>
+          <Text style={styles.tabText}>Kulüpler</Text>
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>2</Text>
           </View>
-        ) : (
-          <Text style={styles.emptyText}>Henüz istatistik yok</Text>
-        )}
+        </TouchableOpacity>
+      </View>
+
+      {/* Tarih Seçici */}
+      <Animated.View
+        style={styles.dateSelector}
+        entering={FadeInDown.delay(200).duration(500)}
+      >
+        <DateSelector
+          days={weekDays}
+          selectedDay={selectedDay}
+          onSelectDay={handleSelectDay}
+        />
       </Animated.View>
 
-      {/* Bugünün Alışkanlıkları */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Bugünkü Alışkanlıklar</Text>
-        <TouchableOpacity style={styles.seeAllButton}>
-          <Text style={styles.seeAllText}>Tümünü Gör</Text>
-          <ChevronRight size={16} color="hsl(221, 83%, 53%)" />
-        </TouchableOpacity>
-      </View>
+      {/* İlerleme Kartı */}
+      <Animated.View
+        entering={FadeInDown.delay(300).duration(500)}
+      >
+        <DailyProgressCard 
+          completed={completedItems}
+          total={totalItems}
+          percentage={progressPercentage}
+        />
+      </Animated.View>
 
-      {todaysHabits.length > 0 ? (
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.habitsScrollContainer}
-        >
-          {todaysHabits.map((habit, index) => (
-            <AnimatedTouchableOpacity 
-              key={habit.id} 
-              style={[styles.habitCard, { borderLeftColor: habit.color }]}
-              entering={FadeInRight.delay(100 * index).springify()}
-            >
-              <Text style={styles.habitName}>{habit.name}</Text>
-              {habit.target && habit.current !== undefined && (
-                <View style={styles.progressContainer}>
-                  <View 
-                    style={[
-                      styles.progressBar, 
-                      { width: `${Math.min(100, (habit.current / habit.target) * 100)}%` }
-                    ]} 
-                  />
-                  <Text style={styles.progressText}>
-                    {habit.current}/{habit.target} {habit.unit || ''}
-                  </Text>
-                </View>
-              )}
-            </AnimatedTouchableOpacity>
-          ))}
-          <AnimatedTouchableOpacity 
-            style={styles.addHabitCard}
-            entering={FadeInRight.delay(100 * todaysHabits.length).springify()}
-          >
-            <Plus size={24} color="hsl(221, 83%, 53%)" />
-            <Text style={styles.addHabitText}>Alışkanlık Ekle</Text>
-          </AnimatedTouchableOpacity>
-        </ScrollView>
-      ) : (
-        <Animated.View 
-          style={styles.emptyHabitsContainer}
-          entering={FadeInDown.delay(200).springify()}
-        >
-          <Text style={styles.emptyText}>Bugün için alışkanlık yok</Text>
-          <TouchableOpacity style={styles.emptyAddButton}>
-            <Text style={styles.emptyAddButtonText}>Alışkanlık Ekle</Text>
+      {/* Meydan Okumalar Bölümü */}
+      <Animated.View
+        entering={FadeInDown.delay(400).duration(500)}
+      >
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Meydan Okumalar</Text>
+          <TouchableOpacity>
+            <Text style={styles.viewAllText}>TÜMÜNÜ GÖR</Text>
           </TouchableOpacity>
-        </Animated.View>
-      )}
-
-      {/* Bugünün Görevleri */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Bugünkü Görevler</Text>
-        <TouchableOpacity style={styles.seeAllButton}>
-          <Text style={styles.seeAllText}>Tümünü Gör</Text>
-          <ChevronRight size={16} color="hsl(221, 83%, 53%)" />
-        </TouchableOpacity>
-      </View>
-
-      {todaysTasks.length > 0 ? (
-        <View style={styles.tasksContainer}>
-          {todaysTasks.slice(0, 3).map((task, index) => (
-            <AnimatedTouchableOpacity 
-              key={task.id} 
-              style={styles.taskCard}
-              entering={FadeInDown.delay(100 * index).springify()}
-            >
-              <View style={styles.taskContent}>
-                <Text style={styles.taskName}>{task.name}</Text>
-                {task.time && (
-                  <Text style={styles.taskTime}>{task.time}</Text>
-                )}
-              </View>
-              {task.priority && (
-                <View style={[
-                  styles.priorityBadge, 
-                  { backgroundColor: 
-                    task.priority === 'high' ? 'hsl(0, 84%, 60%)' : 
-                    task.priority === 'medium' ? 'hsl(38, 92%, 50%)' : 
-                    'hsl(221, 83%, 53%)' 
-                  }
-                ]}>
-                  <Text style={styles.priorityText}>
-                    {task.priority === 'high' ? 'Yüksek' : 
-                     task.priority === 'medium' ? 'Orta' : 
-                     'Düşük'}
-                  </Text>
-                </View>
-              )}
-            </AnimatedTouchableOpacity>
-          ))}
-          {todaysTasks.length > 3 && (
-            <TouchableOpacity style={styles.showMoreButton}>
-              <Text style={styles.showMoreText}>
-                {todaysTasks.length - 3} görev daha
-              </Text>
-              <ChevronRight size={16} color="hsl(221, 83%, 53%)" />
-            </TouchableOpacity>
-          )}
         </View>
-      ) : (
-        <Animated.View 
-          style={styles.emptyTasksContainer}
-          entering={FadeInDown.delay(200).springify()}
-        >
-          <Text style={styles.emptyText}>Bugün için görev yok</Text>
-          <TouchableOpacity style={styles.emptyAddButton}>
-            <Text style={styles.emptyAddButtonText}>Görev Ekle</Text>
+        
+        {challenges.map(challenge => (
+          <ChallengeCard
+            key={challenge.id}
+            id={challenge.id}
+            title={challenge.title}
+            timeLeft={challenge.timeLeft}
+            progress={challenge.progress}
+            friendsJoined={challenge.friendsJoined}
+          />
+        ))}
+      </Animated.View>
+
+      {/* Alışkanlıklar Bölümü */}
+      <Animated.View
+        entering={FadeInDown.delay(500).duration(500)}
+        style={styles.habitsSection}
+      >
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Alışkanlıklar</Text>
+          <TouchableOpacity>
+            <Text style={styles.viewAllText}>TÜMÜNÜ GÖR</Text>
           </TouchableOpacity>
-        </Animated.View>
-      )}
+        </View>
+        
+        {habitData.map(habit => (
+          <HabitCard
+            key={habit.id}
+            id={habit.id}
+            title={habit.title}
+            iconName={habit.iconName}
+            progress={habit.progress}
+            goal={habit.goal}
+            completed={habit.completed}
+            friends={habit.friends}
+            onComplete={() => console.log('Completed:', habit.id)}
+            onSkip={() => console.log('Skipped:', habit.id)}
+            onFail={() => console.log('Failed:', habit.id)}
+            onIncrement={() => console.log('Incremented:', habit.id)}
+          />
+        ))}
+      </Animated.View>
     </ScrollView>
   );
 }
@@ -225,245 +235,118 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'hsl(210, 40%, 98%)',
-    padding: 16,
+    backgroundColor: 'hsl(var(--background))',
   },
   header: {
-    marginTop: 8,
-    marginBottom: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 10,
   },
   greeting: {
     fontSize: 24,
     fontWeight: '700',
-    color: 'hsl(222, 47%, 11%)',
+    color: 'hsl(var(--foreground))',
     marginBottom: 4,
   },
-  date: {
+  subtitle: {
     fontSize: 16,
-    color: 'hsl(215, 16%, 47%)',
+    color: 'hsl(var(--muted-foreground))',
   },
-  // İstatistikler
-  statsContainer: {
-    backgroundColor: 'hsl(0, 0%, 100%)',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: 'hsl(214, 32%, 91%)',
-  },
-  statsContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-  },
-  statItem: {
+  iconRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  statIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    backgroundColor: 'hsl(221, 83%, 53%)',
+  iconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'hsl(var(--secondary))',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginLeft: 10,
   },
-  taskIcon: {
-    backgroundColor: 'hsl(38, 92%, 50%)',
+  notificationButton: {
+    position: 'relative',
   },
-  streakIcon: {
-    backgroundColor: 'hsl(142, 76%, 36%)',
+  notificationBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'hsl(var(--destructive))',
   },
-  statValue: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: 'hsl(222, 47%, 11%)',
-    marginBottom: 2,
+  tabContainer: {
+    flexDirection: 'row',
+    marginHorizontal: 20,
+    marginTop: 20,
+    marginBottom: 16,
+    backgroundColor: 'hsl(var(--secondary))',
+    borderRadius: 100,
+    padding: 4,
   },
-  statLabel: {
-    fontSize: 14,
-    color: 'hsl(215, 16%, 47%)',
+  tab: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 100,
+    flexDirection: 'row',
   },
-  statDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: 'hsl(214, 32%, 91%)',
+  activeTab: {
+    backgroundColor: 'hsl(var(--card))',
   },
-  // Bölüm başlıkları
+  tabText: {
+    fontSize: 15,
+    color: 'hsl(var(--muted-foreground))',
+    fontWeight: '500',
+  },
+  activeTabText: {
+    fontSize: 15,
+    color: 'hsl(var(--primary))',
+    fontWeight: '600',
+  },
+  badge: {
+    backgroundColor: 'hsl(var(--muted))',
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    marginLeft: 6,
+    minWidth: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: {
+    color: 'hsl(var(--muted-foreground))',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  dateSelector: {
+    marginBottom: 16,
+  },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
-    marginTop: 8,
+    paddingHorizontal: 20,
+    marginBottom: 12,
+    marginTop: 10,
   },
   sectionTitle: {
     fontSize: 18,
+    fontWeight: '700',
+    color: 'hsl(var(--foreground))',
+  },
+  viewAllText: {
+    color: 'hsl(var(--primary))',
     fontWeight: '600',
-    color: 'hsl(222, 47%, 11%)',
-  },
-  seeAllButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  seeAllText: {
     fontSize: 14,
-    color: 'hsl(221, 83%, 53%)',
-    marginRight: 4,
   },
-  // Alışkanlıklar
-  habitsScrollContainer: {
-    paddingBottom: 16,
-  },
-  habitCard: {
-    width: 200,
-    backgroundColor: 'hsl(0, 0%, 100%)',
-    borderRadius: 16,
-    padding: 16,
-    marginRight: 12,
-    borderLeftWidth: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: 'hsl(214, 32%, 91%)',
-  },
-  habitName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: 'hsl(222, 47%, 11%)',
-    marginBottom: 12,
-  },
-  progressContainer: {
-    height: 8,
-    backgroundColor: 'hsl(214, 32%, 91%)',
-    borderRadius: 4,
-    overflow: 'hidden',
-    marginBottom: 8,
-  },
-  progressBar: {
-    height: '100%',
-    backgroundColor: 'hsl(221, 83%, 53%)',
-  },
-  progressText: {
-    fontSize: 12,
-    color: 'hsl(215, 16%, 47%)',
-    textAlign: 'right',
-  },
-  addHabitCard: {
-    width: 200,
-    backgroundColor: 'hsl(0, 0%, 100%)',
-    borderRadius: 16,
-    padding: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'hsl(214, 32%, 91%)',
-    borderStyle: 'dashed',
-  },
-  addHabitText: {
-    marginTop: 8,
-    fontSize: 14,
-    color: 'hsl(221, 83%, 53%)',
-    fontWeight: '500',
-  },
-  emptyHabitsContainer: {
-    backgroundColor: 'hsl(0, 0%, 100%)',
-    borderRadius: 16,
-    padding: 24,
-    alignItems: 'center',
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: 'hsl(214, 32%, 91%)',
-  },
-  emptyText: {
-    fontSize: 16,
-    color: 'hsl(215, 16%, 47%)',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  emptyAddButton: {
-    backgroundColor: 'hsl(221, 83%, 53%)',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-  },
-  emptyAddButtonText: {
-    color: 'hsl(0, 0%, 100%)',
-    fontWeight: '500',
-  },
-  // Görevler
-  tasksContainer: {
-    marginBottom: 24,
-  },
-  taskCard: {
-    backgroundColor: 'hsl(0, 0%, 100%)',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: 'hsl(214, 32%, 91%)',
-  },
-  taskContent: {
-    flex: 1,
-  },
-  taskName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: 'hsl(222, 47%, 11%)',
-    marginBottom: 4,
-  },
-  taskTime: {
-    fontSize: 14,
-    color: 'hsl(215, 16%, 47%)',
-  },
-  priorityBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  priorityText: {
-    color: 'hsl(0, 0%, 100%)',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  showMoreButton: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 12,
-    backgroundColor: 'hsl(214, 32%, 97%)',
-    borderRadius: 12,
-    marginTop: 8,
-  },
-  showMoreText: {
-    color: 'hsl(221, 83%, 53%)',
-    marginRight: 4,
-    fontWeight: '500',
-  },
-  emptyTasksContainer: {
-    backgroundColor: 'hsl(0, 0%, 100%)',
-    borderRadius: 16,
-    padding: 24,
-    alignItems: 'center',
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: 'hsl(214, 32%, 91%)',
+  habitsSection: {
+    paddingBottom: 120, // Ekstra alt boşluk için
   },
 }); 

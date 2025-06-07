@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, FlatList, TouchableOpacity, Modal, TextInput, Dimensions } from 'react-native';
-import { Plus, Filter, ChevronDown, X, MoreVertical, Calendar, CheckCircle2, Clock } from 'lucide-react-native';
+import { StyleSheet, View, Text, FlatList, TouchableOpacity, Modal, TextInput, Dimensions, StatusBar, ScrollView } from 'react-native';
+import { Plus, Filter, ChevronDown, X, MoreVertical, Calendar, CheckCircle2, Clock, Target, TrendingUp, Award } from 'lucide-react-native';
 import { useHabitStore, Habit } from '../lib/store/habitStore';
 import Animated, { FadeInDown, SlideInRight, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
@@ -21,32 +21,33 @@ const HabitItem: React.FC<HabitItemProps> = ({ habit, onPress, index }) => {
   
   return (
     <AnimatedTouchableOpacity 
-      style={[styles.habitCard, { borderLeftColor: habit.color }]}
+      style={styles.habitCard}
       onPress={onPress}
       entering={FadeInDown.delay(50 * index).springify()}
     >
+      <View style={[styles.habitColorBadge, { backgroundColor: habit.color }]} />
+      
       <View style={styles.habitHeader}>
-        <View style={styles.habitTitleContainer}>
-          <Text style={styles.habitName}>{habit.name}</Text>
-          <View style={styles.habitBadges}>
-            <View style={styles.frequencyBadge}>
-              <Calendar size={12} color="#777" style={{ marginRight: 4 }} />
-              <Text style={styles.badgeText}>
-                {habit.frequency === 'daily' ? 'Günlük' : 
-                 habit.frequency === 'weekly' ? 'Haftalık' : 'Özel'}
-              </Text>
-            </View>
-            {habit.streak > 0 && (
-              <View style={styles.streakBadge}>
-                <CheckCircle2 size={12} color="#e67e22" style={{ marginRight: 4 }} />
-                <Text style={styles.streakText}>{habit.streak} gün</Text>
-              </View>
-            )}
-          </View>
-        </View>
+        <Text style={styles.habitName}>{habit.name}</Text>
         <View style={[styles.completionIndicator, { 
-          backgroundColor: habit.completedToday ? '#2ecc71' : '#f1f1f1' 
+          backgroundColor: habit.completedToday ? 'hsl(142, 76%, 36%)' : 'hsl(214, 32%, 91%)' 
         }]} />
+      </View>
+
+      <View style={styles.habitBadges}>
+        <View style={styles.frequencyBadge}>
+          <Calendar size={12} color="hsl(215, 16%, 47%)" style={{ marginRight: 4 }} />
+          <Text style={styles.badgeText}>
+            {habit.frequency === 'daily' ? 'Günlük' : 
+             habit.frequency === 'weekly' ? 'Haftalık' : 'Özel'}
+          </Text>
+        </View>
+        {habit.streak > 0 && (
+          <View style={styles.streakBadge}>
+            <Award size={12} color="hsl(38, 92%, 50%)" style={{ marginRight: 4 }} />
+            <Text style={styles.streakText}>{habit.streak} gün</Text>
+          </View>
+        )}
       </View>
       
       {habit.target && habit.current !== undefined && (
@@ -63,7 +64,7 @@ const HabitItem: React.FC<HabitItemProps> = ({ habit, onPress, index }) => {
                 styles.progressBar, 
                 { 
                   width: `${progress}%`,
-                  backgroundColor: habit.completedToday ? '#2ecc71' : '#3498db' 
+                  backgroundColor: habit.completedToday ? 'hsl(142, 76%, 36%)' : 'hsl(221, 83%, 53%)' 
                 }
               ]} 
             />
@@ -72,12 +73,14 @@ const HabitItem: React.FC<HabitItemProps> = ({ habit, onPress, index }) => {
       )}
       
       <View style={styles.habitActions}>
+        <View style={styles.habitInfoContainer}>
+          <Clock size={14} color="hsl(215, 16%, 47%)" />
+          <Text style={styles.habitInfoText}>
+            {habit.completedToday ? 'Bugün tamamlandı' : 'Bekliyor'}
+          </Text>
+        </View>
         <TouchableOpacity style={styles.actionButton}>
-          <Clock size={18} color="#777" />
-          <Text style={styles.actionText}>Güncellenme Zamanı</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
-          <MoreVertical size={18} color="#777" />
+          <MoreVertical size={16} color="hsl(215, 16%, 47%)" />
         </TouchableOpacity>
       </View>
     </AnimatedTouchableOpacity>
@@ -150,6 +153,12 @@ export default function HabitsScreen() {
     };
   });
 
+  // Özet istatistikleri
+  const totalHabits = habits.length;
+  const completedHabits = habits.filter(h => h.completedToday).length;
+  const inProgressHabits = habits.filter(h => h.current !== undefined && h.current > 0 && !h.completedToday).length;
+  const streakHabits = habits.filter(h => h.streak > 0).length;
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -165,16 +174,93 @@ export default function HabitsScreen() {
         <View style={styles.headerButtons}>
           <Animated.View style={filterBtnStyle}>
             <TouchableOpacity style={styles.filterButton} onPress={toggleFilter}>
-              <Filter size={20} color="#333" />
+              <Filter size={20} color="hsl(222, 47%, 11%)" />
             </TouchableOpacity>
           </Animated.View>
           <Animated.View style={addBtnStyle}>
             <TouchableOpacity style={styles.addButton} onPress={toggleAddModal}>
-              <Plus size={20} color="#fff" />
+              <Plus size={20} color="hsl(0, 0%, 100%)" />
             </TouchableOpacity>
           </Animated.View>
         </View>
       </View>
+
+      {/* Özet Kartları */}
+      <Animated.View 
+        style={styles.statsGrid}
+        entering={FadeInDown.delay(100).springify()}
+      >
+        <View style={styles.statCard}>
+          <View style={[styles.statIconContainer, { backgroundColor: 'hsl(221, 83%, 53%)' }]}>
+            <Target size={18} color="hsl(0, 0%, 100%)" />
+          </View>
+          <Text style={styles.statValue}>{totalHabits}</Text>
+          <Text style={styles.statLabel}>Toplam</Text>
+        </View>
+
+        <View style={styles.statCard}>
+          <View style={[styles.statIconContainer, { backgroundColor: 'hsl(142, 76%, 36%)' }]}>
+            <CheckCircle2 size={18} color="hsl(0, 0%, 100%)" />
+          </View>
+          <Text style={styles.statValue}>{completedHabits}</Text>
+          <Text style={styles.statLabel}>Tamamlandı</Text>
+        </View>
+
+        <View style={styles.statCard}>
+          <View style={[styles.statIconContainer, { backgroundColor: 'hsl(38, 92%, 50%)' }]}>
+            <TrendingUp size={18} color="hsl(0, 0%, 100%)" />
+          </View>
+          <Text style={styles.statValue}>{inProgressHabits}</Text>
+          <Text style={styles.statLabel}>Devam Ediyor</Text>
+        </View>
+
+        <View style={styles.statCard}>
+          <View style={[styles.statIconContainer, { backgroundColor: 'hsl(280, 67%, 45%)' }]}>
+            <Award size={18} color="hsl(0, 0%, 100%)" />
+          </View>
+          <Text style={styles.statValue}>{streakHabits}</Text>
+          <Text style={styles.statLabel}>Seriler</Text>
+        </View>
+      </Animated.View>
+      
+      {/* Filtre Çubukları */}
+      <Animated.View 
+        style={styles.filterTabs}
+        entering={FadeInDown.delay(150).springify()}
+      >
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterTabsContent}
+        >
+          <TouchableOpacity 
+            style={[styles.filterTab, activeFilter === 'all' && styles.activeFilterTab]} 
+            onPress={() => setActiveFilter('all')}
+          >
+            <Text style={[styles.filterTabText, activeFilter === 'all' && styles.activeFilterTabText]}>
+              Tümü
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.filterTab, activeFilter === 'active' && styles.activeFilterTab]} 
+            onPress={() => setActiveFilter('active')}
+          >
+            <Text style={[styles.filterTabText, activeFilter === 'active' && styles.activeFilterTabText]}>
+              Aktif
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.filterTab, activeFilter === 'completed' && styles.activeFilterTab]} 
+            onPress={() => setActiveFilter('completed')}
+          >
+            <Text style={[styles.filterTabText, activeFilter === 'completed' && styles.activeFilterTabText]}>
+              Tamamlanan
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </Animated.View>
       
       {filteredHabits.length > 0 ? (
         <FlatList
@@ -194,8 +280,15 @@ export default function HabitsScreen() {
           style={styles.emptyContainer}
           entering={FadeInDown.delay(100).springify()}
         >
+          <View style={styles.emptyIconContainer}>
+            <Target size={40} color="hsl(215, 16%, 47%)" opacity={0.5} />
+          </View>
           <Text style={styles.emptyText}>Henüz alışkanlık eklenmemiş</Text>
+          <Text style={styles.emptySubText}>
+            Yeni alışkanlıklar ekleyerek hedeflerinize ulaşın
+          </Text>
           <TouchableOpacity style={styles.emptyAddButton} onPress={toggleAddModal}>
+            <Plus size={20} color="hsl(0, 0%, 100%)" />
             <Text style={styles.emptyAddButtonText}>Alışkanlık Ekle</Text>
           </TouchableOpacity>
         </Animated.View>
@@ -209,14 +302,14 @@ export default function HabitsScreen() {
         onRequestClose={() => setFilterModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <Animated.View 
-            style={styles.modalContent}
-            entering={SlideInRight.springify()}
-          >
+          <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Filtrele</Text>
-              <TouchableOpacity onPress={() => setFilterModalVisible(false)}>
-                <X size={24} color="#333" />
+              <TouchableOpacity 
+                style={styles.modalCloseButton}
+                onPress={() => setFilterModalVisible(false)}
+              >
+                <X size={20} color="hsl(222, 47%, 11%)" />
               </TouchableOpacity>
             </View>
             
@@ -227,23 +320,25 @@ export default function HabitsScreen() {
                   style={[styles.filterOption, activeFilter === 'all' && styles.activeFilterOption]} 
                   onPress={() => setActiveFilter('all')}
                 >
-                  <Text style={activeFilter === 'all' ? styles.activeFilterText : styles.filterText}>
+                  <Text style={[styles.filterOptionText, activeFilter === 'all' && styles.activeFilterOptionText]}>
                     Tümü
                   </Text>
                 </TouchableOpacity>
+                
                 <TouchableOpacity 
                   style={[styles.filterOption, activeFilter === 'active' && styles.activeFilterOption]} 
                   onPress={() => setActiveFilter('active')}
                 >
-                  <Text style={activeFilter === 'active' ? styles.activeFilterText : styles.filterText}>
+                  <Text style={[styles.filterOptionText, activeFilter === 'active' && styles.activeFilterOptionText]}>
                     Aktif
                   </Text>
                 </TouchableOpacity>
+                
                 <TouchableOpacity 
                   style={[styles.filterOption, activeFilter === 'completed' && styles.activeFilterOption]} 
                   onPress={() => setActiveFilter('completed')}
                 >
-                  <Text style={activeFilter === 'completed' ? styles.activeFilterText : styles.filterText}>
+                  <Text style={[styles.filterOptionText, activeFilter === 'completed' && styles.activeFilterOptionText]}>
                     Tamamlanmış
                   </Text>
                 </TouchableOpacity>
@@ -257,31 +352,34 @@ export default function HabitsScreen() {
                   style={[styles.filterOption, frequencyFilter === 'all' && styles.activeFilterOption]} 
                   onPress={() => setFrequencyFilter('all')}
                 >
-                  <Text style={frequencyFilter === 'all' ? styles.activeFilterText : styles.filterText}>
+                  <Text style={[styles.filterOptionText, frequencyFilter === 'all' && styles.activeFilterOptionText]}>
                     Tümü
                   </Text>
                 </TouchableOpacity>
+                
                 <TouchableOpacity 
                   style={[styles.filterOption, frequencyFilter === 'daily' && styles.activeFilterOption]} 
                   onPress={() => setFrequencyFilter('daily')}
                 >
-                  <Text style={frequencyFilter === 'daily' ? styles.activeFilterText : styles.filterText}>
+                  <Text style={[styles.filterOptionText, frequencyFilter === 'daily' && styles.activeFilterOptionText]}>
                     Günlük
                   </Text>
                 </TouchableOpacity>
+                
                 <TouchableOpacity 
                   style={[styles.filterOption, frequencyFilter === 'weekly' && styles.activeFilterOption]} 
                   onPress={() => setFrequencyFilter('weekly')}
                 >
-                  <Text style={frequencyFilter === 'weekly' ? styles.activeFilterText : styles.filterText}>
+                  <Text style={[styles.filterOptionText, frequencyFilter === 'weekly' && styles.activeFilterOptionText]}>
                     Haftalık
                   </Text>
                 </TouchableOpacity>
+                
                 <TouchableOpacity 
                   style={[styles.filterOption, frequencyFilter === 'custom' && styles.activeFilterOption]} 
                   onPress={() => setFrequencyFilter('custom')}
                 >
-                  <Text style={frequencyFilter === 'custom' ? styles.activeFilterText : styles.filterText}>
+                  <Text style={[styles.filterOptionText, frequencyFilter === 'custom' && styles.activeFilterOptionText]}>
                     Özel
                   </Text>
                 </TouchableOpacity>
@@ -289,48 +387,12 @@ export default function HabitsScreen() {
             </View>
             
             <TouchableOpacity 
-              style={styles.applyFilterButton}
-              onPress={() => {
-                applyFilters();
-                setFilterModalVisible(false);
-              }}
+              style={styles.applyButton}
+              onPress={() => setFilterModalVisible(false)}
             >
-              <Text style={styles.applyFilterButtonText}>Uygula</Text>
+              <Text style={styles.applyButtonText}>Filtreleri Uygula</Text>
             </TouchableOpacity>
-          </Animated.View>
-        </View>
-      </Modal>
-      
-      {/* Yeni Alışkanlık Ekleme Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={addModalVisible}
-        onRequestClose={() => setAddModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <Animated.View 
-            style={styles.modalContent}
-            entering={SlideInRight.springify()}
-          >
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Yeni Alışkanlık</Text>
-              <TouchableOpacity onPress={() => setAddModalVisible(false)}>
-                <X size={24} color="#333" />
-              </TouchableOpacity>
-            </View>
-            
-            <Text style={styles.modalNote}>
-              Bu sadece bir prototip ekranıdır. Gerçek bir ekleme formu uygulamak için bu kısmı genişletebilirsiniz.
-            </Text>
-            
-            <TouchableOpacity 
-              style={styles.closeModalButton}
-              onPress={() => setAddModalVisible(false)}
-            >
-              <Text style={styles.closeModalButtonText}>Kapat</Text>
-            </TouchableOpacity>
-          </Animated.View>
+          </View>
         </View>
       </Modal>
     </View>
@@ -340,182 +402,285 @@ export default function HabitsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: 'hsl(210, 40%, 98%)',
+    paddingTop: StatusBar.currentHeight || 0,
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
-    paddingTop: 30,
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 5,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 10,
+    backgroundColor: 'hsl(210, 40%, 98%)',
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 4,
+    fontWeight: '700',
+    color: 'hsl(222, 47%, 11%)',
   },
   headerSubtitle: {
     fontSize: 14,
-    color: '#777',
+    color: 'hsl(215, 16%, 47%)',
+    marginTop: 2,
   },
   headerButtons: {
     flexDirection: 'row',
+    alignItems: 'center',
   },
   filterButton: {
-    padding: 10,
-    borderRadius: 12,
-    backgroundColor: '#f0f0f0',
-    marginRight: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'hsl(214, 32%, 91%)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
   },
   addButton: {
-    padding: 10,
-    borderRadius: 12,
-    backgroundColor: '#3498db',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'hsl(221, 83%, 53%)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: 'hsl(221, 83%, 53%)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  habitsList: {
-    padding: 15,
-    paddingBottom: 100, // For tab navigation
+  statsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 16,
   },
-  habitCard: {
-    backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 15,
-    borderLeftWidth: 5,
-    shadowColor: '#000',
+  statCard: {
+    width: (width - 48) / 4,
+    backgroundColor: 'hsl(0, 0%, 100%)',
+    borderRadius: 16,
+    padding: 12,
+    alignItems: 'center',
+    shadowColor: 'hsl(222, 47%, 11%)',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 8,
+    shadowRadius: 5,
     elevation: 2,
+  },
+  statIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  statValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: 'hsl(222, 47%, 11%)',
+  },
+  statLabel: {
+    fontSize: 12,
+    color: 'hsl(215, 16%, 47%)',
+    marginTop: 2,
+  },
+  filterTabs: {
+    marginBottom: 12,
+  },
+  filterTabsContent: {
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+  },
+  filterTab: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 8,
+    backgroundColor: 'hsl(214, 32%, 91%)',
+  },
+  activeFilterTab: {
+    backgroundColor: 'hsl(221, 83%, 53%)',
+  },
+  filterTabText: {
+    fontSize: 14,
+    color: 'hsl(215, 16%, 47%)',
+    fontWeight: '500',
+  },
+  activeFilterTabText: {
+    color: 'hsl(0, 0%, 100%)',
+  },
+  habitsList: {
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+  },
+  habitCard: {
+    backgroundColor: 'hsl(0, 0%, 100%)',
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: 'hsl(222, 47%, 11%)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
+    borderWidth: 0,
+  },
+  habitColorBadge: {
+    width: 5,
+    height: 40,
+    borderRadius: 2.5,
+    position: 'absolute',
+    left: 6,
+    top: 16,
   },
   habitHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 10,
-  },
-  habitTitleContainer: {
-    flex: 1,
+    alignItems: 'center',
+    marginBottom: 8,
+    paddingLeft: 10,
   },
   habitName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
-    marginBottom: 5,
-    color: '#333',
+    color: 'hsl(222, 47%, 11%)',
+  },
+  completionIndicator: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
   },
   habitBadges: {
     flexDirection: 'row',
-    alignItems: 'center',
+    marginBottom: 12,
+    paddingLeft: 10,
   },
   frequencyBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f0f0f0',
+    backgroundColor: 'hsl(214, 32%, 91%)',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 10,
+    borderRadius: 12,
     marginRight: 8,
   },
   streakBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(230, 126, 34, 0.1)',
+    backgroundColor: 'hsl(38, 92%, 95%)',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 10,
+    borderRadius: 12,
   },
   badgeText: {
     fontSize: 12,
-    color: '#777',
+    color: 'hsl(215, 16%, 47%)',
   },
   streakText: {
     fontSize: 12,
-    color: '#e67e22',
+    color: 'hsl(38, 92%, 50%)',
     fontWeight: '500',
   },
-  completionIndicator: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    marginLeft: 10,
-  },
   progressSection: {
-    marginVertical: 10,
+    marginBottom: 12,
+    paddingLeft: 10,
   },
   progressInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 5,
+    marginBottom: 4,
   },
   currentValueText: {
-    fontSize: 13,
-    color: '#555',
+    fontSize: 14,
+    color: 'hsl(215, 16%, 47%)',
   },
   percentText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#3498db',
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'hsl(222, 47%, 11%)',
   },
   progressContainer: {
-    height: 8,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 4,
+    height: 6,
+    backgroundColor: 'hsl(214, 32%, 91%)',
+    borderRadius: 3,
     overflow: 'hidden',
   },
   progressBar: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    backgroundColor: '#3498db',
-    borderRadius: 4,
+    height: '100%',
+    backgroundColor: 'hsl(221, 83%, 53%)',
+    borderRadius: 3,
   },
   habitActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    paddingLeft: 10,
   },
-  actionButton: {
+  habitInfoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 5,
   },
-  actionText: {
-    fontSize: 12,
-    color: '#777',
-    marginLeft: 5,
+  habitInfoText: {
+    fontSize: 14,
+    color: 'hsl(215, 16%, 47%)',
+    marginLeft: 6,
+  },
+  actionButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'hsl(214, 32%, 91%)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    justifyContent: 'center',
+    padding: 24,
+    backgroundColor: 'hsl(0, 0%, 100%)',
+    borderRadius: 24,
+    margin: 16,
+    borderWidth: 1,
+    borderColor: 'hsl(214, 32%, 91%)',
+  },
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'hsl(214, 32%, 97%)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
   },
   emptyText: {
-    fontSize: 16,
-    color: '#777',
-    marginBottom: 15,
+    fontSize: 18,
+    fontWeight: '600',
+    color: 'hsl(222, 47%, 11%)',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptySubText: {
+    fontSize: 14,
+    color: 'hsl(215, 16%, 47%)',
+    marginBottom: 24,
     textAlign: 'center',
   },
   emptyAddButton: {
-    backgroundColor: '#3498db',
+    backgroundColor: 'hsl(221, 83%, 53%)',
     paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 12,
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   emptyAddButtonText: {
-    color: '#fff',
+    color: 'hsl(0, 0%, 100%)',
     fontWeight: '600',
+    marginLeft: 8,
   },
   modalOverlay: {
     flex: 1,
@@ -523,28 +688,25 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: 'hsl(0, 0%, 100%)',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    padding: 20,
-    paddingTop: 30,
-    maxHeight: '80%',
+    padding: 24,
+    paddingBottom: 36,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    color: 'hsl(222, 47%, 11%)',
   },
-  modalNote: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 20,
-    textAlign: 'center',
+  modalCloseButton: {
+    padding: 8,
   },
   filterSection: {
     marginBottom: 20,
@@ -552,52 +714,41 @@ const styles = StyleSheet.create({
   filterSectionTitle: {
     fontSize: 16,
     fontWeight: '600',
+    color: 'hsl(222, 47%, 11%)',
     marginBottom: 12,
-    color: '#333',
   },
   filterOptions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
   },
   filterOption: {
-    paddingVertical: 8,
+    backgroundColor: 'hsl(214, 32%, 97%)',
     paddingHorizontal: 16,
-    borderRadius: 20,
-    backgroundColor: '#f0f0f0',
+    paddingVertical: 10,
+    borderRadius: 16,
+    marginRight: 8,
+    marginBottom: 8,
   },
   activeFilterOption: {
-    backgroundColor: '#3498db',
+    backgroundColor: 'hsl(221, 83%, 53%)',
   },
-  filterText: {
-    color: '#333',
-  },
-  activeFilterText: {
-    color: '#fff',
+  filterOptionText: {
+    color: 'hsl(222, 47%, 11%)',
     fontWeight: '500',
   },
-  applyFilterButton: {
-    backgroundColor: '#3498db',
-    padding: 16,
-    borderRadius: 12,
+  activeFilterOptionText: {
+    color: 'hsl(0, 0%, 100%)',
+  },
+  applyButton: {
+    backgroundColor: 'hsl(221, 83%, 53%)',
+    paddingVertical: 14,
+    borderRadius: 16,
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 16,
   },
-  applyFilterButtonText: {
-    color: '#fff',
-    fontWeight: '600',
+  applyButtonText: {
+    color: 'hsl(0, 0%, 100%)',
     fontSize: 16,
-  },
-  closeModalButton: {
-    backgroundColor: '#f0f0f0',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  closeModalButtonText: {
-    color: '#333',
     fontWeight: '600',
-    fontSize: 16,
   },
 }); 

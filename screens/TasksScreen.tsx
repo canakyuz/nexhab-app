@@ -1,19 +1,28 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, FlatList, TouchableOpacity, Modal } from 'react-native';
-import { Plus, Filter, Calendar, Clock, CheckCircle, X, CalendarDays } from 'lucide-react-native';
+import { StyleSheet, View, Text, FlatList, TouchableOpacity, Modal, ScrollView, StatusBar } from 'react-native';
+import { Plus, Filter, Calendar, Clock, Check, X, CalendarDays, Tag, Bell } from 'lucide-react-native';
 import { useTaskStore, Task } from '../lib/store/taskStore';
-import { getTodayDate, formatDate } from '../lib/utils';
+import { getTodayDate, formatDate, isSameDay } from '../lib/utils';
+import Animated, { FadeInDown, Layout, FadeIn, useAnimatedStyle, useSharedValue, withSpring, SlideInRight } from 'react-native-reanimated';
 
 export default function TasksScreen() {
-  const { tasks, fetchTasks, toggleTaskCompletion } = useTaskStore();
+  const { tasks, fetchTasks, toggleTaskCompletion, deleteTask } = useTaskStore();
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [addModalVisible, setAddModalVisible] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(getTodayDate());
+  const [selectedDate, setSelectedDate] = useState(new Date(getTodayDate()));
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
 
+  // Animation values
+  const fabScale = useSharedValue(1);
+  const fabAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: fabScale.value }]
+    };
+  });
+
   useEffect(() => {
-    fetchTasks(selectedDate);
+    fetchTasks(formatDate(selectedDate));
   }, [selectedDate]);
 
   useEffect(() => {
@@ -36,111 +45,143 @@ export default function TasksScreen() {
   };
 
   const toggleAddModal = () => {
+    fabScale.value = withSpring(0.8, {}, () => {
+      fabScale.value = withSpring(1);
+    });
     setAddModalVisible(!addModalVisible);
   };
 
-  const handleDateChange = (offset: number) => {
-    const date = new Date(selectedDate);
-    date.setDate(date.getDate() + offset);
-    setSelectedDate(date.toISOString().split('T')[0]);
+  const onTaskPress = (taskId: string) => {
+    toggleTaskCompletion(taskId);
+  };
+
+  const onTaskDelete = (taskId: string) => {
+    deleteTask(taskId);
   };
 
   const renderTaskItem = ({ item }: { item: Task }) => (
-    <TouchableOpacity 
-      style={[
-        styles.taskCard, 
-        item.completed && styles.completedTaskCard
-      ]} 
-      onPress={() => toggleTaskCompletion(item.id)}
+    <Animated.View
+      style={styles.taskCard}
+      entering={FadeInDown.duration(350)}
+      layout={Layout.springify()}
     >
-      <View style={styles.taskMain}>
-        <TouchableOpacity
-          style={styles.checkCircle}
-          onPress={() => toggleTaskCompletion(item.id)}
-        >
-          {item.completed ? 
-            <CheckCircle size={24} color="#2ecc71" /> : 
-            <View style={styles.emptyCircle} />
-          }
-        </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.checkCircle, item.completed && styles.checkedCircle]}
+        onPress={() => onTaskPress(item.id)}
+      >
+        {item.completed && <Check size={16} color="hsl(0, 0%, 100%)" />}
+      </TouchableOpacity>
+      
+      <View style={styles.taskContent}>
+        <Text style={[
+          styles.taskName, 
+          item.completed && styles.completedTaskText
+        ]}>
+          {item.name}
+        </Text>
         
-        <View style={styles.taskContent}>
-          <Text style={[
-            styles.taskName, 
-            item.completed && styles.completedTaskText
-          ]}>
-            {item.name}
+        {item.note && (
+          <Text style={styles.taskNote} numberOfLines={1}>
+            {item.note}
           </Text>
+        )}
+
+        <View style={styles.taskDetails}>
+          {item.time && (
+            <View style={styles.taskDetail}>
+              <Clock size={14} color="hsl(215, 16%, 47%)" />
+              <Text style={styles.detailText}>{item.time}</Text>
+            </View>
+          )}
           
-          {item.note && (
-            <Text style={styles.taskNote} numberOfLines={1}>
-              {item.note}
-            </Text>
+          {item.category && (
+            <View style={styles.taskDetail}>
+              <Tag size={14} color="hsl(215, 16%, 47%)" />
+              <Text style={styles.detailText}>{item.category}</Text>
+            </View>
+          )}
+          
+          {item.priority && (
+            <View style={[
+              styles.priorityBadge, 
+              { backgroundColor: 
+                item.priority === 'high' ? 'hsl(0, 84%, 60%)' : 
+                item.priority === 'medium' ? 'hsl(38, 92%, 50%)' : 
+                'hsl(221, 83%, 53%)' 
+              }
+            ]}>
+              <Text style={styles.priorityText}>
+                {item.priority === 'high' ? 'Yüksek' : 
+                 item.priority === 'medium' ? 'Orta' : 
+                 'Düşük'}
+              </Text>
+            </View>
           )}
         </View>
       </View>
       
-      <View style={styles.taskDetails}>
-        {item.time && (
-          <View style={styles.taskTime}>
-            <Clock size={14} color="#777" style={styles.detailIcon} />
-            <Text style={styles.detailText}>{item.time}</Text>
-          </View>
-        )}
-        
-        {item.priority && (
-          <View style={[
-            styles.priorityBadge, 
-            { backgroundColor: 
-              item.priority === 'high' ? '#e74c3c' : 
-              item.priority === 'medium' ? '#f39c12' : 
-              '#3498db' 
-            }
-          ]}>
-            <Text style={styles.priorityText}>
-              {item.priority === 'high' ? 'Yüksek' : 
-               item.priority === 'medium' ? 'Orta' : 
-               'Düşük'}
-            </Text>
-          </View>
-        )}
-      </View>
-    </TouchableOpacity>
+      <TouchableOpacity 
+        style={styles.deleteButton}
+        onPress={() => onTaskDelete(item.id)}
+      >
+        <X size={16} color="hsl(215, 16%, 47%)" />
+      </TouchableOpacity>
+    </Animated.View>
   );
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <Animated.View 
+        style={styles.header}
+        entering={FadeIn.duration(400)}
+      >
         <Text style={styles.headerTitle}>Görevlerim</Text>
         <View style={styles.headerButtons}>
-          <TouchableOpacity style={styles.filterButton} onPress={toggleFilter}>
-            <Filter size={20} color="#333" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.addButton} onPress={toggleAddModal}>
-            <Plus size={20} color="#fff" />
+          <TouchableOpacity style={styles.iconButton} onPress={toggleFilter}>
+            <Filter size={20} color="hsl(222, 47%, 11%)" />
           </TouchableOpacity>
         </View>
-      </View>
+      </Animated.View>
       
       {/* Tarih Seçici */}
-      <View style={styles.dateSelector}>
-        <TouchableOpacity onPress={() => handleDateChange(-1)}>
-          <Text style={styles.dateArrow}>{"<"}</Text>
+      <DateSelector 
+        selectedDate={selectedDate}
+        onDateChange={setSelectedDate}
+      />
+      
+      {/* Filtreler */}
+      <Animated.View 
+        style={styles.filtersContainer}
+        entering={FadeInDown.delay(100).springify()}
+      >
+        <TouchableOpacity 
+          style={[styles.filterButton, priorityFilter === 'all' && styles.activeFilterButton]} 
+          onPress={() => setPriorityFilter('all')}
+        >
+          <Text style={[styles.filterText, priorityFilter === 'all' && styles.activeFilterText]}>Tümü</Text>
         </TouchableOpacity>
         
-        <View style={styles.dateContainer}>
-          <CalendarDays size={18} color="#3498db" style={styles.dateIcon} />
-          <Text style={styles.dateText}>
-            {selectedDate === getTodayDate() 
-              ? 'Bugün' 
-              : formatDate(new Date(selectedDate))}
-          </Text>
-        </View>
-        
-        <TouchableOpacity onPress={() => handleDateChange(1)}>
-          <Text style={styles.dateArrow}>{">"}</Text>
+        <TouchableOpacity 
+          style={[styles.filterButton, priorityFilter === 'high' && styles.activeFilterButton]} 
+          onPress={() => setPriorityFilter('high')}
+        >
+          <Text style={[styles.filterText, priorityFilter === 'high' && styles.activeFilterText]}>Yüksek</Text>
         </TouchableOpacity>
-      </View>
+        
+        <TouchableOpacity 
+          style={[styles.filterButton, priorityFilter === 'medium' && styles.activeFilterButton]} 
+          onPress={() => setPriorityFilter('medium')}
+        >
+          <Text style={[styles.filterText, priorityFilter === 'medium' && styles.activeFilterText]}>Orta</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.filterButton, priorityFilter === 'low' && styles.activeFilterButton]} 
+          onPress={() => setPriorityFilter('low')}
+        >
+          <Text style={[styles.filterText, priorityFilter === 'low' && styles.activeFilterText]}>Düşük</Text>
+        </TouchableOpacity>
+      </Animated.View>
       
       {filteredTasks.length > 0 ? (
         <FlatList
@@ -150,13 +191,15 @@ export default function TasksScreen() {
           contentContainerStyle={styles.tasksList}
         />
       ) : (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>Bu gün için görev yok</Text>
-          <TouchableOpacity style={styles.emptyAddButton} onPress={toggleAddModal}>
-            <Text style={styles.emptyAddButtonText}>Görev Ekle</Text>
-          </TouchableOpacity>
-        </View>
+        <EmptyTaskList onAdd={toggleAddModal} />
       )}
+      
+      {/* Floating Action Button */}
+      <Animated.View style={[styles.fabContainer, fabAnimatedStyle]}>
+        <TouchableOpacity style={styles.fab} onPress={toggleAddModal}>
+          <Plus size={24} color="hsl(0, 0%, 100%)" />
+        </TouchableOpacity>
+      </Animated.View>
       
       {/* Filtre Modal */}
       <Modal
@@ -166,11 +209,17 @@ export default function TasksScreen() {
         onRequestClose={() => setFilterModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <Animated.View 
+            style={styles.modalContent}
+            entering={SlideInRight.springify()}
+          >
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Filtrele</Text>
-              <TouchableOpacity onPress={() => setFilterModalVisible(false)}>
-                <X size={24} color="#333" />
+              <TouchableOpacity 
+                style={styles.modalCloseButton}
+                onPress={() => setFilterModalVisible(false)}
+              >
+                <X size={20} color="hsl(222, 47%, 11%)" />
               </TouchableOpacity>
             </View>
             
@@ -181,7 +230,7 @@ export default function TasksScreen() {
                   style={[styles.filterOption, priorityFilter === 'all' && styles.activeFilterOption]} 
                   onPress={() => setPriorityFilter('all')}
                 >
-                  <Text style={priorityFilter === 'all' ? styles.activeFilterText : styles.filterText}>
+                  <Text style={priorityFilter === 'all' ? styles.activeFilterOptionText : styles.filterOptionText}>
                     Tümü
                   </Text>
                 </TouchableOpacity>
@@ -189,7 +238,7 @@ export default function TasksScreen() {
                   style={[styles.filterOption, priorityFilter === 'high' && styles.activeFilterOption]} 
                   onPress={() => setPriorityFilter('high')}
                 >
-                  <Text style={priorityFilter === 'high' ? styles.activeFilterText : styles.filterText}>
+                  <Text style={priorityFilter === 'high' ? styles.activeFilterOptionText : styles.filterOptionText}>
                     Yüksek
                   </Text>
                 </TouchableOpacity>
@@ -197,7 +246,7 @@ export default function TasksScreen() {
                   style={[styles.filterOption, priorityFilter === 'medium' && styles.activeFilterOption]} 
                   onPress={() => setPriorityFilter('medium')}
                 >
-                  <Text style={priorityFilter === 'medium' ? styles.activeFilterText : styles.filterText}>
+                  <Text style={priorityFilter === 'medium' ? styles.activeFilterOptionText : styles.filterOptionText}>
                     Orta
                   </Text>
                 </TouchableOpacity>
@@ -205,7 +254,7 @@ export default function TasksScreen() {
                   style={[styles.filterOption, priorityFilter === 'low' && styles.activeFilterOption]} 
                   onPress={() => setPriorityFilter('low')}
                 >
-                  <Text style={priorityFilter === 'low' ? styles.activeFilterText : styles.filterText}>
+                  <Text style={priorityFilter === 'low' ? styles.activeFilterOptionText : styles.filterOptionText}>
                     Düşük
                   </Text>
                 </TouchableOpacity>
@@ -213,241 +262,393 @@ export default function TasksScreen() {
             </View>
             
             <TouchableOpacity 
-              style={styles.applyFilterButton}
-              onPress={() => {
-                applyFilters();
-                setFilterModalVisible(false);
-              }}
+              style={styles.applyButton}
+              onPress={() => setFilterModalVisible(false)}
             >
-              <Text style={styles.applyFilterButtonText}>Uygula</Text>
+              <Text style={styles.applyButtonText}>Uygula</Text>
             </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-      
-      {/* Yeni Görev Ekleme Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={addModalVisible}
-        onRequestClose={() => setAddModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Yeni Görev</Text>
-              <TouchableOpacity onPress={() => setAddModalVisible(false)}>
-                <X size={24} color="#333" />
-              </TouchableOpacity>
-            </View>
-            
-            <Text style={styles.modalNote}>
-              Bu sadece bir prototip ekranıdır. Gerçek bir ekleme formu uygulamak için bu kısmı genişletebilirsiniz.
-            </Text>
-            
-            <TouchableOpacity 
-              style={styles.closeModalButton}
-              onPress={() => setAddModalVisible(false)}
-            >
-              <Text style={styles.closeModalButtonText}>Kapat</Text>
-            </TouchableOpacity>
-          </View>
+          </Animated.View>
         </View>
       </Modal>
     </View>
   );
 }
 
+// Tarih seçici bileşeni
+type DateSelectorProps = {
+  selectedDate: Date;
+  onDateChange: (date: Date) => void;
+};
+
+const DateSelector = ({ selectedDate, onDateChange }: DateSelectorProps) => {
+  const today = new Date();
+  const dates = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date();
+    date.setDate(today.getDate() + i);
+    return date;
+  });
+
+  const formatDayName = (date: Date) => {
+    const day = date.toLocaleDateString('tr-TR', { weekday: 'short' });
+    return day.charAt(0).toUpperCase() + day.slice(1, 3);
+  };
+
+  return (
+    <Animated.View 
+      style={styles.dateSelector}
+      entering={FadeInDown.delay(50).springify()}
+    >
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.dateSelectorContent}
+      >
+        {dates.map((date) => {
+          const isSelected = isSameDay(date, selectedDate);
+          const isToday = isSameDay(date, today);
+          
+          return (
+            <TouchableOpacity
+              key={date.toISOString()}
+              style={[
+                styles.dateItem,
+                isSelected && styles.selectedDateItem,
+              ]}
+              onPress={() => onDateChange(date)}
+            >
+              <Text style={[
+                styles.dateDayName,
+                isSelected && styles.selectedDateText,
+                isToday && styles.todayText
+              ]}>
+                {formatDayName(date)}
+              </Text>
+              <Text style={[
+                styles.dateNumber,
+                isSelected && styles.selectedDateText,
+                isToday && styles.todayText
+              ]}>
+                {date.getDate()}
+              </Text>
+              {isToday && <View style={styles.todayDot} />}
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+    </Animated.View>
+  );
+};
+
+// Boş liste gösterimi
+const EmptyTaskList = ({ onAdd }: { onAdd: () => void }) => (
+  <Animated.View 
+    style={styles.emptyContainer}
+    entering={FadeInDown.delay(150).springify()}
+  >
+    <View style={styles.emptyIconContainer}>
+      <Bell size={40} color="hsl(215, 16%, 47%)" opacity={0.5} />
+    </View>
+    <Text style={styles.emptyText}>Bu gün için görev yok</Text>
+    <Text style={styles.emptySubText}>
+      Yeni bir görev ekleyerek başlayabilirsiniz
+    </Text>
+    <TouchableOpacity style={styles.emptyAddButton} onPress={onAdd}>
+      <Plus size={20} color="hsl(0, 0%, 100%)" />
+      <Text style={styles.emptyAddButtonText}>Görev Ekle</Text>
+    </TouchableOpacity>
+  </Animated.View>
+);
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: 'hsl(210, 40%, 98%)',
+    paddingTop: StatusBar.currentHeight || 0,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 15,
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: '700',
+    color: 'hsl(222, 47%, 11%)',
   },
   headerButtons: {
     flexDirection: 'row',
+    alignItems: 'center',
   },
-  filterButton: {
+  iconButton: {
     padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#f0f0f0',
-    marginRight: 10,
+    borderRadius: 12,
+    backgroundColor: 'hsl(0, 0%, 100%)',
+    borderWidth: 1,
+    borderColor: 'hsl(214, 32%, 91%)',
   },
-  addButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#3498db',
-  },
+  // Tarih seçici
   dateSelector: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 15,
-    backgroundColor: '#fff',
-    marginVertical: 10,
-    marginHorizontal: 15,
-    borderRadius: 10,
+    backgroundColor: 'hsl(0, 0%, 100%)',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: 'hsl(214, 32%, 91%)',
   },
-  dateArrow: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#3498db',
+  dateSelectorContent: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
-  dateContainer: {
-    flexDirection: 'row',
+  dateItem: {
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginHorizontal: 4,
+    borderRadius: 16,
+    position: 'relative',
   },
-  dateIcon: {
-    marginRight: 5,
+  selectedDateItem: {
+    backgroundColor: 'hsl(221, 83%, 53%)',
   },
-  dateText: {
+  dateDayName: {
+    fontSize: 13,
+    color: 'hsl(215, 16%, 47%)',
+    marginBottom: 4,
+    fontWeight: '500',
+  },
+  dateNumber: {
     fontSize: 16,
     fontWeight: '600',
+    color: 'hsl(222, 47%, 11%)',
   },
+  selectedDateText: {
+    color: 'hsl(0, 0%, 100%)',
+  },
+  todayText: {
+    color: 'hsl(221, 83%, 53%)',
+  },
+  todayDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: 'hsl(221, 83%, 53%)',
+    position: 'absolute',
+    bottom: 6,
+  },
+  // Filtreler
+  filtersContainer: {
+    flexDirection: 'row',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    overflow: 'hidden',
+  },
+  filterButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    backgroundColor: 'hsl(0, 0%, 100%)',
+    borderRadius: 16,
+    marginHorizontal: 4,
+    borderWidth: 1,
+    borderColor: 'hsl(214, 32%, 91%)',
+  },
+  activeFilterButton: {
+    backgroundColor: 'hsl(221, 83%, 53%)',
+    borderColor: 'hsl(221, 83%, 53%)',
+  },
+  filterText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: 'hsl(222, 47%, 11%)',
+  },
+  activeFilterText: {
+    color: 'hsl(0, 0%, 100%)',
+  },
+  // Görevler listesi
   tasksList: {
-    padding: 15,
-    gap: 15,
+    padding: 16,
+    paddingBottom: 100, // FAB için alan
   },
   taskCard: {
-    backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'hsl(0, 0%, 100%)',
+    padding: 16,
+    borderRadius: 20,
+    marginBottom: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 1,
-    elevation: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: 'hsl(214, 32%, 91%)',
   },
   completedTaskCard: {
     opacity: 0.7,
   },
-  taskMain: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 5,
-  },
   checkCircle: {
-    marginRight: 10,
-  },
-  emptyCircle: {
     width: 24,
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#ddd',
+    borderColor: 'hsl(221, 83%, 53%)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  checkedCircle: {
+    backgroundColor: 'hsl(221, 83%, 53%)',
   },
   taskContent: {
     flex: 1,
   },
   taskName: {
     fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 2,
+    fontWeight: '600',
+    color: 'hsl(222, 47%, 11%)',
   },
   completedTaskText: {
     textDecorationLine: 'line-through',
-    color: '#777',
+    color: 'hsl(215, 16%, 47%)',
   },
   taskNote: {
     fontSize: 14,
-    color: '#777',
+    color: 'hsl(215, 16%, 47%)',
+    marginTop: 2,
   },
   taskDetails: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
     alignItems: 'center',
+    flexWrap: 'wrap',
     marginTop: 8,
   },
-  taskTime: {
+  taskDetail: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 10,
-  },
-  detailIcon: {
-    marginRight: 4,
+    marginRight: 12,
   },
   detailText: {
-    fontSize: 14,
-    color: '#777',
+    fontSize: 13,
+    color: 'hsl(215, 16%, 47%)',
+    marginLeft: 4,
   },
   priorityBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 12,
   },
   priorityText: {
-    color: '#fff',
+    color: 'hsl(0, 0%, 100%)',
     fontSize: 12,
     fontWeight: '500',
   },
+  deleteButton: {
+    padding: 8,
+    borderRadius: 16,
+    backgroundColor: 'hsl(214, 32%, 97%)',
+  },
+  // Boş liste
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    justifyContent: 'center',
+    padding: 24,
+    backgroundColor: 'hsl(0, 0%, 100%)',
+    borderRadius: 24,
+    margin: 16,
+    borderWidth: 1,
+    borderColor: 'hsl(214, 32%, 91%)',
+  },
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'hsl(214, 32%, 97%)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
   },
   emptyText: {
-    fontSize: 16,
-    color: '#777',
-    marginBottom: 15,
+    fontSize: 18,
+    fontWeight: '600',
+    color: 'hsl(222, 47%, 11%)',
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  emptySubText: {
+    fontSize: 14,
+    color: 'hsl(215, 16%, 47%)',
+    textAlign: 'center',
+    marginBottom: 24,
   },
   emptyAddButton: {
-    backgroundColor: '#3498db',
-    paddingVertical: 10,
+    backgroundColor: 'hsl(221, 83%, 53%)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
     paddingHorizontal: 20,
-    borderRadius: 8,
+    borderRadius: 16,
   },
   emptyAddButtonText: {
-    color: '#fff',
+    color: 'hsl(0, 0%, 100%)',
     fontWeight: '600',
+    marginLeft: 8,
   },
+  // FAB
+  fabContainer: {
+    position: 'absolute',
+    bottom: 30,
+    right: 20,
+  },
+  fab: {
+    backgroundColor: 'hsl(221, 83%, 53%)',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  // Modal
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    maxHeight: '80%',
+    backgroundColor: 'hsl(0, 0%, 100%)',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 36,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 24,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '600',
+    color: 'hsl(222, 47%, 11%)',
   },
-  modalNote: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 20,
-    textAlign: 'center',
+  modalCloseButton: {
+    padding: 8,
   },
   filterSection: {
     marginBottom: 20,
@@ -455,51 +656,41 @@ const styles = StyleSheet.create({
   filterSectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 10,
+    color: 'hsl(222, 47%, 11%)',
+    marginBottom: 12,
   },
   filterOptions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
   },
   filterOption: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: 'hsl(214, 32%, 97%)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 16,
+    marginRight: 8,
+    marginBottom: 8,
   },
   activeFilterOption: {
-    backgroundColor: '#3498db',
+    backgroundColor: 'hsl(221, 83%, 53%)',
   },
-  filterText: {
-    color: '#333',
-  },
-  activeFilterText: {
-    color: '#fff',
+  filterOptionText: {
+    color: 'hsl(222, 47%, 11%)',
     fontWeight: '500',
   },
-  applyFilterButton: {
-    backgroundColor: '#3498db',
-    padding: 15,
-    borderRadius: 8,
+  activeFilterOptionText: {
+    color: 'hsl(0, 0%, 100%)',
+  },
+  applyButton: {
+    backgroundColor: 'hsl(221, 83%, 53%)',
+    paddingVertical: 14,
+    borderRadius: 16,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 16,
   },
-  applyFilterButtonText: {
-    color: '#fff',
-    fontWeight: '600',
+  applyButtonText: {
+    color: 'hsl(0, 0%, 100%)',
     fontSize: 16,
-  },
-  closeModalButton: {
-    backgroundColor: '#f0f0f0',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  closeModalButtonText: {
-    color: '#333',
     fontWeight: '600',
-    fontSize: 16,
   },
 }); 
