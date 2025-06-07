@@ -105,7 +105,7 @@ export default function HomeScreen() {
         <Text style={styles.sectionTitle}>Bugünkü Alışkanlıklar</Text>
         <TouchableOpacity style={styles.seeAllButton}>
           <Text style={styles.seeAllText}>Tümünü Gör</Text>
-          <ChevronRight size={16} color="#3498db" />
+          <ChevronRight size={16} color="hsl(221, 83%, 53%)" />
         </TouchableOpacity>
       </View>
 
@@ -141,7 +141,7 @@ export default function HomeScreen() {
             style={styles.addHabitCard}
             entering={FadeInRight.delay(100 * todaysHabits.length).springify()}
           >
-            <Plus size={24} color="#3498db" />
+            <Plus size={24} color="hsl(221, 83%, 53%)" />
             <Text style={styles.addHabitText}>Alışkanlık Ekle</Text>
           </AnimatedTouchableOpacity>
         </ScrollView>
@@ -162,7 +162,7 @@ export default function HomeScreen() {
         <Text style={styles.sectionTitle}>Bugünkü Görevler</Text>
         <TouchableOpacity style={styles.seeAllButton}>
           <Text style={styles.seeAllText}>Tümünü Gör</Text>
-          <ChevronRight size={16} color="#3498db" />
+          <ChevronRight size={16} color="hsl(221, 83%, 53%)" />
         </TouchableOpacity>
       </View>
 
@@ -184,9 +184,9 @@ export default function HomeScreen() {
                 <View style={[
                   styles.priorityBadge, 
                   { backgroundColor: 
-                    task.priority === 'high' ? '#e74c3c' : 
-                    task.priority === 'medium' ? '#f39c12' : 
-                    '#3498db' 
+                    task.priority === 'high' ? 'hsl(0, 84%, 60%)' : 
+                    task.priority === 'medium' ? 'hsl(38, 92%, 50%)' : 
+                    'hsl(221, 83%, 53%)' 
                   }
                 ]}>
                   <Text style={styles.priorityText}>
@@ -199,15 +199,18 @@ export default function HomeScreen() {
             </AnimatedTouchableOpacity>
           ))}
           {todaysTasks.length > 3 && (
-            <TouchableOpacity style={styles.moreTasksButton}>
-              <Text style={styles.moreTasksText}>+{todaysTasks.length - 3} Daha Fazla</Text>
+            <TouchableOpacity style={styles.showMoreButton}>
+              <Text style={styles.showMoreText}>
+                {todaysTasks.length - 3} görev daha
+              </Text>
+              <ChevronRight size={16} color="hsl(221, 83%, 53%)" />
             </TouchableOpacity>
           )}
         </View>
       ) : (
         <Animated.View 
           style={styles.emptyTasksContainer}
-          entering={FadeInDown.delay(300).springify()}
+          entering={FadeInDown.delay(200).springify()}
         >
           <Text style={styles.emptyText}>Bugün için görev yok</Text>
           <TouchableOpacity style={styles.emptyAddButton}>
@@ -222,252 +225,245 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: 'hsl(210, 40%, 98%)',
+    padding: 16,
   },
   header: {
-    padding: 20,
-    paddingTop: 30,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 16,
   },
   greeting: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: '700',
+    color: 'hsl(222, 47%, 11%)',
     marginBottom: 4,
   },
   date: {
     fontSize: 16,
-    color: '#777',
+    color: 'hsl(215, 16%, 47%)',
   },
+  // İstatistikler
   statsContainer: {
-    margin: 15,
-    backgroundColor: '#fff',
-    borderRadius: 15,
-    padding: 15,
+    backgroundColor: 'hsl(0, 0%, 100%)',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 10,
+    shadowRadius: 8,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: 'hsl(214, 32%, 91%)',
   },
   statsContent: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     alignItems: 'center',
   },
   statItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
   },
   statIcon: {
     width: 36,
     height: 36,
-    borderRadius: 18,
-    backgroundColor: '#3498db',
-    justifyContent: 'center',
+    borderRadius: 12,
+    backgroundColor: 'hsl(221, 83%, 53%)',
     alignItems: 'center',
-    marginRight: 10,
+    justifyContent: 'center',
+    marginRight: 12,
   },
   taskIcon: {
-    backgroundColor: '#2ecc71',
+    backgroundColor: 'hsl(38, 92%, 50%)',
   },
   streakIcon: {
-    backgroundColor: '#e67e22',
+    backgroundColor: 'hsl(142, 76%, 36%)',
   },
   statValue: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: '700',
+    color: 'hsl(222, 47%, 11%)',
+    marginBottom: 2,
   },
   statLabel: {
     fontSize: 14,
-    color: '#777',
+    color: 'hsl(215, 16%, 47%)',
   },
   statDivider: {
     width: 1,
-    height: 30,
-    backgroundColor: '#eee',
-    marginHorizontal: 10,
+    height: 40,
+    backgroundColor: 'hsl(214, 32%, 91%)',
   },
+  // Bölüm başlıkları
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 15,
-    marginTop: 20,
-    marginBottom: 10,
+    marginBottom: 16,
+    marginTop: 8,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: '600',
+    color: 'hsl(222, 47%, 11%)',
   },
   seeAllButton: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   seeAllText: {
-    color: '#3498db',
     fontSize: 14,
-    marginRight: 2,
+    color: 'hsl(221, 83%, 53%)',
+    marginRight: 4,
   },
+  // Alışkanlıklar
   habitsScrollContainer: {
-    paddingHorizontal: 15,
-    paddingBottom: 10,
+    paddingBottom: 16,
   },
   habitCard: {
-    backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 12,
-    width: width * 0.65,
-    marginRight: 15,
-    borderLeftWidth: 5,
+    width: 200,
+    backgroundColor: 'hsl(0, 0%, 100%)',
+    borderRadius: 16,
+    padding: 16,
+    marginRight: 12,
+    borderLeftWidth: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 10,
+    shadowRadius: 8,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: 'hsl(214, 32%, 91%)',
   },
   habitName: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 10,
-    color: '#333',
+    color: 'hsl(222, 47%, 11%)',
+    marginBottom: 12,
   },
   progressContainer: {
-    height: 10,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 5,
-    marginTop: 10,
+    height: 8,
+    backgroundColor: 'hsl(214, 32%, 91%)',
+    borderRadius: 4,
     overflow: 'hidden',
-    position: 'relative',
+    marginBottom: 8,
   },
   progressBar: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    backgroundColor: '#2ecc71',
-    borderRadius: 5,
+    height: '100%',
+    backgroundColor: 'hsl(221, 83%, 53%)',
   },
   progressText: {
-    position: 'absolute',
-    right: 0,
-    top: 15,
     fontSize: 12,
-    color: '#777',
+    color: 'hsl(215, 16%, 47%)',
+    textAlign: 'right',
   },
   addHabitCard: {
-    backgroundColor: 'rgba(52, 152, 219, 0.1)',
-    padding: 15,
-    borderRadius: 12,
-    width: width * 0.4,
+    width: 200,
+    backgroundColor: 'hsl(0, 0%, 100%)',
+    borderRadius: 16,
+    padding: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    borderStyle: 'dashed',
     borderWidth: 1,
-    borderColor: '#3498db',
+    borderColor: 'hsl(214, 32%, 91%)',
+    borderStyle: 'dashed',
   },
   addHabitText: {
-    color: '#3498db',
+    marginTop: 8,
     fontSize: 14,
+    color: 'hsl(221, 83%, 53%)',
     fontWeight: '500',
-    marginTop: 5,
   },
   emptyHabitsContainer: {
-    margin: 15,
-    padding: 20,
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: 'hsl(0, 0%, 100%)',
+    borderRadius: 16,
+    padding: 24,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: 'hsl(214, 32%, 91%)',
   },
+  emptyText: {
+    fontSize: 16,
+    color: 'hsl(215, 16%, 47%)',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  emptyAddButton: {
+    backgroundColor: 'hsl(221, 83%, 53%)',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+  },
+  emptyAddButtonText: {
+    color: 'hsl(0, 0%, 100%)',
+    fontWeight: '500',
+  },
+  // Görevler
   tasksContainer: {
-    paddingHorizontal: 15,
-    paddingBottom: 100, // For tab navigation
+    marginBottom: 24,
   },
   taskCard: {
-    backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 10,
+    backgroundColor: 'hsl(0, 0%, 100%)',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 10,
+    shadowRadius: 8,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: 'hsl(214, 32%, 91%)',
   },
   taskContent: {
     flex: 1,
   },
   taskName: {
     fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
+    fontWeight: '600',
+    color: 'hsl(222, 47%, 11%)',
     marginBottom: 4,
   },
   taskTime: {
     fontSize: 14,
-    color: '#777',
+    color: 'hsl(215, 16%, 47%)',
   },
   priorityBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
-    marginLeft: 10,
   },
   priorityText: {
-    color: '#fff',
+    color: 'hsl(0, 0%, 100%)',
     fontSize: 12,
     fontWeight: '500',
   },
-  moreTasksButton: {
+  showMoreButton: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    padding: 15,
-    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+    padding: 12,
+    backgroundColor: 'hsl(214, 32%, 97%)',
     borderRadius: 12,
-    marginTop: 5,
+    marginTop: 8,
   },
-  moreTasksText: {
-    color: '#3498db',
+  showMoreText: {
+    color: 'hsl(221, 83%, 53%)',
+    marginRight: 4,
     fontWeight: '500',
   },
   emptyTasksContainer: {
-    margin: 15,
-    padding: 20,
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: 'hsl(0, 0%, 100%)',
+    borderRadius: 16,
+    padding: 24,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  emptyText: {
-    textAlign: 'center',
-    color: '#777',
-    fontStyle: 'italic',
-    marginBottom: 15,
-  },
-  emptyAddButton: {
-    backgroundColor: '#3498db',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-  emptyAddButtonText: {
-    color: '#fff',
-    fontWeight: '600',
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: 'hsl(214, 32%, 91%)',
   },
 }); 

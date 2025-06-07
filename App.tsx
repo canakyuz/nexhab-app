@@ -12,7 +12,8 @@ import ProfileScreen from './screens/ProfileScreen';
 import Animated, { 
   useAnimatedStyle, 
   useSharedValue, 
-  withSpring 
+  withSpring,
+  FadeIn
 } from 'react-native-reanimated';
 
 const Tab = createBottomTabNavigator();
@@ -45,10 +46,13 @@ export default function App() {
         {error ? (
           <Text style={styles.errorText}>{error}</Text>
         ) : (
-          <>
-            <ActivityIndicator size="large" color="#3498db" />
+          <Animated.View 
+            style={styles.loadingContainer}
+            entering={FadeIn.duration(400)}
+          >
+            <ActivityIndicator size="large" color="hsl(221, 83%, 53%)" />
             <Text style={styles.loadingText}>Uygulama yükleniyor...</Text>
-          </>
+          </Animated.View>
         )}
       </View>
     );
@@ -74,25 +78,26 @@ export default function App() {
             
             return (
               <View style={styles.tabIconContainer}>
-                <View 
+                <Animated.View 
                   style={[
                     styles.tabIconBackground, 
-                    focused && { backgroundColor: 'rgba(52, 152, 219, 0.1)' }
+                    focused && styles.tabIconBackgroundActive
                   ]}
                 >
                   {icon}
-                </View>
-                <Text style={{ color, fontSize: 11, marginTop: 4 }}>
+                </Animated.View>
+                <Text style={[styles.tabLabel, { color }]}>
                   {route.name}
                 </Text>
               </View>
             );
           },
-          tabBarActiveTintColor: '#3498db',
-          tabBarInactiveTintColor: '#a0a0a0',
+          tabBarActiveTintColor: 'hsl(221, 83%, 53%)',
+          tabBarInactiveTintColor: 'hsl(215, 16%, 47%)',
           tabBarStyle: styles.tabBar,
           headerStyle: styles.header,
           headerTitleStyle: styles.headerTitle,
+          headerShadowVisible: false,
         })}
       >
         <Tab.Screen name="Ana Sayfa" component={HomeScreen} />
@@ -107,24 +112,29 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: 'hsl(210, 40%, 98%)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingContainer: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   loadingText: {
-    marginTop: 10,
+    marginTop: 12,
     fontSize: 16,
+    color: 'hsl(215, 16%, 47%)',
   },
   errorText: {
-    color: 'red',
+    color: 'hsl(0, 84%, 60%)',
     fontSize: 16,
     textAlign: 'center',
     padding: 20,
   },
   // Tab bar stili
   tabBar: {
-    height: 70,
-    backgroundColor: '#ffffff',
+    height: 76,
+    backgroundColor: 'hsl(0, 0%, 100%)',
     borderTopWidth: 0,
     elevation: 10,
     shadowColor: '#000',
@@ -132,13 +142,17 @@ const styles = StyleSheet.create({
       width: 0,
       height: -2,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
     paddingBottom: Platform.OS === 'ios' ? 20 : 10,
-    paddingTop: 10,
+    paddingTop: 12,
     position: 'absolute',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderTopWidth: 1,
+    borderColor: 'hsl(214, 32%, 91%)',
   },
   // Tab icon container
   tabIconContainer: {
@@ -146,12 +160,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tabIconBackground: {
-    padding: 8,
+    padding: 10,
     borderRadius: 16,
+    backgroundColor: 'transparent',
+    marginBottom: 6,
+  },
+  tabIconBackgroundActive: {
+    backgroundColor: 'hsla(221, 83%, 53%, 0.1)',
+  },
+  tabLabel: {
+    fontSize: 11,
+    fontWeight: '500',
   },
   // Header stili
   header: {
-    backgroundColor: '#fff',
+    backgroundColor: 'hsl(210, 40%, 98%)',
     elevation: 0,
     shadowOpacity: 0,
     borderBottomWidth: 0,
@@ -159,6 +182,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: 'hsl(222, 47%, 11%)',
   },
 }); 
