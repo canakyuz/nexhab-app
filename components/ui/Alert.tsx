@@ -1,94 +1,71 @@
-import { BORDER_RADIUS, Colors, Spacing, Typography } from '@/design-tokens';
-import React from 'react';
-import { StyleSheet, Text, TextStyle, View, ViewStyle } from 'react-native';
+import { useTheme } from '@react-navigation/native';
+import { cva, type VariantProps } from 'class-variance-authority';
+import type { LucideIcon } from 'lucide-react-native';
+import * as React from 'react';
+import { View, type ViewProps } from 'react-native';
+import { Text } from '@/components/ui/text';
+import { cn } from '@/lib/utils';
 
-export type AlertVariant = 'info' | 'success' | 'warning' | 'error';
+const alertVariants = cva(
+  'relative bg-background w-full rounded-lg border border-border p-4 shadow shadow-foreground/10',
+  {
+    variants: {
+      variant: {
+        default: '',
+        destructive: 'border-destructive',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+    },
+  }
+);
 
-export type AlertProps = {
-  message: string;
-  variant?: AlertVariant;
-  style?: ViewStyle;
-  textStyle?: TextStyle;
-  accessibilityLabel?: string;
-};
-
-export const Alert = ({
-  message,
-  variant = 'info',
-  style,
-  textStyle,
-  accessibilityLabel,
-}: AlertProps) => {
-  const getAlertStyle = () => {
-    switch (variant) {
-      case 'success':
-        return [styles.alert, styles.success, style];
-      case 'warning':
-        return [styles.alert, styles.warning, style];
-      case 'error':
-        return [styles.alert, styles.error, style];
-      default:
-        return [styles.alert, styles.info, style];
-    }
-  };
-
-  const getTextStyle = () => {
-    switch (variant) {
-      case 'success':
-        return [styles.text, styles.textSuccess, textStyle];
-      case 'warning':
-        return [styles.text, styles.textWarning, textStyle];
-      case 'error':
-        return [styles.text, styles.textError, textStyle];
-      default:
-        return [styles.text, styles.textInfo, textStyle];
-    }
-  };
-
+function Alert({
+  className,
+  variant,
+  children,
+  icon: Icon,
+  iconSize = 16,
+  iconClassName,
+  ...props
+}: ViewProps &
+  VariantProps<typeof alertVariants> & {
+    ref?: React.RefObject<View>;
+    icon: LucideIcon;
+    iconSize?: number;
+    iconClassName?: string;
+  }) {
+  const { colors } = useTheme();
   return (
-    <View style={getAlertStyle()} accessible accessibilityLabel={accessibilityLabel || message}>
-      <Text style={getTextStyle()}>{message}</Text>
+    <View role='alert' className={alertVariants({ variant, className })} {...props}>
+      <View className='absolute left-3.5 top-4 -translate-y-0.5'>
+        <Icon
+          size={iconSize}
+          color={variant === 'destructive' ? colors.notification : colors.text}
+        />
+      </View>
+      {children}
     </View>
   );
-};
+}
 
-const styles = StyleSheet.create({
-  alert: {
-    borderRadius: BORDER_RADIUS.md,
-    padding: Spacing.md,
-    marginVertical: Spacing.xs,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  info: {
-    backgroundColor: Colors.lightGray,
-    borderWidth: 1,
-    borderColor: Colors.primary,
-  },
-  success: {
-    backgroundColor: Colors.success,
-  },
-  warning: {
-    backgroundColor: Colors.warning,
-  },
-  error: {
-    backgroundColor: Colors.error,
-  },
-  text: {
-    ...Typography.styles.body,
-    color: Colors.darkGray,
-    textAlign: 'center',
-  },
-  textInfo: {
-    color: Colors.primary,
-  },
-  textSuccess: {
-    color: Colors.white,
-  },
-  textWarning: {
-    color: Colors.white,
-  },
-  textError: {
-    color: Colors.white,
-  },
-}); 
+function AlertTitle({ className, ...props }: React.ComponentProps<typeof Text>) {
+  return (
+    <Text
+      className={cn(
+        'pl-7 mb-1 font-medium text-base leading-none tracking-tight text-foreground',
+        className
+      )}
+      {...props}
+    />
+  );
+}
+
+function AlertDescription({ className, ...props }: React.ComponentProps<typeof Text>) {
+  return (
+    <Text className={cn('pl-7 text-sm leading-relaxed text-foreground', className)} {...props} />
+  );
+}
+
+export { Alert, AlertDescription, AlertTitle };

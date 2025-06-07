@@ -1,94 +1,82 @@
-import { BORDER_RADIUS, Colors, Shadows, Spacing } from '@/design-tokens';
-import React from 'react';
-import { Platform, StyleSheet, View, ViewStyle } from 'react-native';
-// import LinearGradient from 'react-native-linear-gradient'; // Eğer gradient kullanılacaksa
+import * as React from 'react';
+import { Text, TextProps, View, ViewProps } from 'react-native';
+import { TextClassContext } from '~/components/ui/text';
+import { cn } from '~/lib/utils';
 
-export type CardVariant = 'solid' | 'outline' | 'shadow' | 'elevated' | 'gradient' | 'compact';
-
-export type CardProps = {
-  children: React.ReactNode;
-  variant?: CardVariant;
-  shadow?: boolean;
-  border?: boolean;
-  gradientColors?: string[];
-  compact?: boolean;
-  fullWidth?: boolean;
-  style?: ViewStyle;
-  accessibilityLabel?: string;
-};
-
-export const Card = ({
-  children,
-  variant = 'solid',
-  shadow = true,
-  border = false,
-  gradientColors = [Colors.primary, Colors.secondary],
-  compact = false,
-  fullWidth = false,
-  style,
-  accessibilityLabel,
-}: CardProps) => {
-  // Varyasyonlara göre stil seçimi
-  const getCardStyle = () => {
-    let base = [styles.card, fullWidth && styles.fullWidth, style];
-    if (compact) base.push(styles.compact);
-    switch (variant) {
-      case 'outline':
-        base.push(styles.outline);
-        break;
-      case 'shadow':
-        base.push(Platform.OS === 'ios' ? Shadows.card.ios : Shadows.card.android);
-        break;
-      case 'elevated':
-        base.push(Platform.OS === 'ios' ? Shadows.modal.ios : Shadows.modal.android);
-        break;
-      case 'gradient':
-        // Gradient için özel render gerekir
-        break;
-      default:
-        if (shadow) base.push(Platform.OS === 'ios' ? Shadows.card.ios : Shadows.card.android);
-        break;
-    }
-    if (border) base.push(styles.border);
-    return base;
-  };
-
-  // Gradient varyasyonu için özel render
-  // if (variant === 'gradient') {
-  //   return (
-  //     <LinearGradient colors={gradientColors} style={getCardStyle()}>
-  //       {children}
-  //     </LinearGradient>
-  //   );
-  // }
-
+function Card({
+  className,
+  ...props
+}: ViewProps & {
+  ref?: React.RefObject<View>;
+}) {
   return (
-    <View style={getCardStyle()} accessibilityRole="summary" accessibilityLabel={accessibilityLabel}>
-      {children}
-    </View>
+    <View
+      className={cn(
+        'rounded-lg border border-border bg-card shadow-sm shadow-foreground/10',
+        className
+      )}
+      {...props}
+    />
   );
-};
+}
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: Colors.white,
-    borderRadius: BORDER_RADIUS.lg,
-    padding: Spacing.card.padding,
-  },
-  outline: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: Colors.primary,
-  },
-  border: {
-    borderWidth: 1,
-    borderColor: Colors.gray,
-  },
-  compact: {
-    padding: Spacing.sm,
-    borderRadius: BORDER_RADIUS.md,
-  },
-  fullWidth: {
-    alignSelf: 'stretch',
-  },
-}); 
+function CardHeader({
+  className,
+  ...props
+}: ViewProps & {
+  ref?: React.RefObject<View>;
+}) {
+  return <View className={cn('flex flex-col space-y-1.5 p-6', className)} {...props} />;
+}
+
+function CardTitle({
+  className,
+  ...props
+}: TextProps & {
+  ref?: React.RefObject<Text>;
+}) {
+  return (
+    <Text
+      role='heading'
+      aria-level={3}
+      className={cn(
+        'text-2xl text-card-foreground font-semibold leading-none tracking-tight',
+        className
+      )}
+      {...props}
+    />
+  );
+}
+
+function CardDescription({
+  className,
+  ...props
+}: TextProps & {
+  ref?: React.RefObject<Text>;
+}) {
+  return <Text className={cn('text-sm text-muted-foreground', className)} {...props} />;
+}
+
+function CardContent({
+  className,
+  ...props
+}: ViewProps & {
+  ref?: React.RefObject<View>;
+}) {
+  return (
+    <TextClassContext.Provider value='text-card-foreground'>
+      <View className={cn('p-6 pt-0', className)} {...props} />
+    </TextClassContext.Provider>
+  );
+}
+
+function CardFooter({
+  className,
+  ...props
+}: ViewProps & {
+  ref?: React.RefObject<View>;
+}) {
+  return <View className={cn('flex flex-row items-center p-6 pt-0', className)} {...props} />;
+}
+
+export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle };

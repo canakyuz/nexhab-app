@@ -1,172 +1,81 @@
-import { BORDER_RADIUS, Colors, Shadows, Spacing, Typography } from '@/design-tokens';
-import React from 'react';
-import {
-  ActivityIndicator,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextStyle,
-  View,
-  ViewStyle,
-} from 'react-native';
-// import LinearGradient from 'react-native-linear-gradient'; // Eğer gradient kullanılacaksa
+import { cva, type VariantProps } from 'class-variance-authority';
+import * as React from 'react';
+import { Pressable } from 'react-native';
+import { TextClassContext } from '~/components/ui/text';
+import { cn } from '~/lib/utils';
 
-export type ButtonVariant = 'solid' | 'outline' | 'ghost' | 'gradient';
+const buttonVariants = cva(
+  'group flex items-center justify-center rounded-md web:ring-offset-background web:transition-colors web:focus-visible:outline-none web:focus-visible:ring-2 web:focus-visible:ring-ring web:focus-visible:ring-offset-2',
+  {
+    variants: {
+      variant: {
+        default: 'bg-primary web:hover:opacity-90 active:opacity-90',
+        destructive: 'bg-destructive web:hover:opacity-90 active:opacity-90',
+        outline:
+          'border border-input bg-background web:hover:bg-accent web:hover:text-accent-foreground active:bg-accent',
+        secondary: 'bg-secondary web:hover:opacity-80 active:opacity-80',
+        ghost: 'web:hover:bg-accent web:hover:text-accent-foreground active:bg-accent',
+        link: 'web:underline-offset-4 web:hover:underline web:focus:underline',
+      },
+      size: {
+        default: 'h-10 px-4 py-2 native:h-12 native:px-5 native:py-3',
+        sm: 'h-9 rounded-md px-3',
+        lg: 'h-11 rounded-md px-8 native:h-14',
+        icon: 'h-10 w-10',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+      size: 'default',
+    },
+  }
+);
 
-export type ButtonProps = {
-  title: string;
-  onPress: () => void;
-  variant?: ButtonVariant;
-  disabled?: boolean;
-  loading?: boolean;
-  leftIcon?: React.ReactNode;
-  rightIcon?: React.ReactNode;
-  fullWidth?: boolean;
-  style?: ViewStyle;
-  textStyle?: TextStyle;
-  accessibilityLabel?: string;
-};
+const buttonTextVariants = cva(
+  'web:whitespace-nowrap text-sm native:text-base font-medium text-foreground web:transition-colors',
+  {
+    variants: {
+      variant: {
+        default: 'text-primary-foreground',
+        destructive: 'text-destructive-foreground',
+        outline: 'group-active:text-accent-foreground',
+        secondary: 'text-secondary-foreground group-active:text-secondary-foreground',
+        ghost: 'group-active:text-accent-foreground',
+        link: 'text-primary group-active:underline',
+      },
+      size: {
+        default: '',
+        sm: '',
+        lg: 'native:text-lg',
+        icon: '',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+      size: 'default',
+    },
+  }
+);
 
-export const Button = ({
-  title,
-  onPress,
-  variant = 'solid',
-  disabled,
-  loading,
-  leftIcon,
-  rightIcon,
-  fullWidth,
-  style,
-  textStyle,
-  accessibilityLabel,
-}: ButtonProps) => {
-  // Varyasyonlara göre stil seçimi
-  const getButtonStyle = () => {
-    switch (variant) {
-      case 'outline':
-        return [
-          styles.button,
-          styles.outline,
-          fullWidth && styles.fullWidth,
-          disabled && styles.disabled,
-          style,
-        ];
-      case 'ghost':
-        return [
-          styles.button,
-          styles.ghost,
-          fullWidth && styles.fullWidth,
-          disabled && styles.disabled,
-          style,
-        ];
-      case 'gradient':
-        return [
-          styles.button,
-          fullWidth && styles.fullWidth,
-          disabled && styles.disabled,
-          style,
-        ];
-      default:
-        return [
-          styles.button,
-          fullWidth && styles.fullWidth,
-          disabled && styles.disabled,
-          style,
-        ];
-    }
-  };
+type ButtonProps = React.ComponentProps<typeof Pressable> & VariantProps<typeof buttonVariants>;
 
-  // Gradient varyasyonu için özel render
-  // if (variant === 'gradient') {
-  //   return (
-  //     <LinearGradient colors={[Colors.primary, Colors.secondary]} style={getButtonStyle()}>
-  //       <ButtonContent />
-  //     </LinearGradient>
-  //   );
-  // }
-
-  const ButtonContent = () => (
-    <View style={styles.content}>
-      {leftIcon && <View style={styles.icon}>{leftIcon}</View>}
-      <Text
-        style={[
-          styles.text,
-          variant === 'outline' && styles.textOutline,
-          variant === 'ghost' && styles.textGhost,
-          textStyle,
-        ]}
-        numberOfLines={1}
-      >
-        {title}
-      </Text>
-      {rightIcon && <View style={styles.icon}>{rightIcon}</View>}
-    </View>
-  );
-
+function Button({ ref, className, variant, size, ...props }: ButtonProps) {
   return (
-    <Pressable
-      style={getButtonStyle()}
-      onPress={onPress}
-      disabled={disabled || loading}
-      android_ripple={{ color: Colors.gray, borderless: false }}
-      hitSlop={8}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel || title}
-      accessibilityState={{ disabled: disabled || loading }}
+    <TextClassContext.Provider
+      value={buttonTextVariants({ variant, size, className: 'web:pointer-events-none' })}
     >
-      {loading ? (
-        <ActivityIndicator color={variant === 'solid' ? Colors.white : Colors.primary} />
-      ) : (
-        <ButtonContent />
-      )}
-    </Pressable>
+      <Pressable
+        className={cn(
+          props.disabled && 'opacity-50 web:pointer-events-none',
+          buttonVariants({ variant, size, className })
+        )}
+        ref={ref}
+        role='button'
+        {...props}
+      />
+    </TextClassContext.Provider>
   );
-};
+}
 
-const styles = StyleSheet.create({
-  button: {
-    backgroundColor: Colors.primary,
-    paddingVertical: Spacing.button.paddingVertical,
-    paddingHorizontal: Spacing.button.paddingHorizontal,
-    borderRadius: BORDER_RADIUS.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    minHeight: 44,
-    ...(Platform.OS === 'ios' ? Shadows.button.ios : Shadows.button.android),
-  },
-  outline: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: Colors.primary,
-  },
-  ghost: {
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-  },
-  fullWidth: {
-    alignSelf: 'stretch',
-  },
-  text: {
-    color: Colors.white,
-    ...Typography.styles.button,
-  },
-  textOutline: {
-    color: Colors.primary,
-  },
-  textGhost: {
-    color: Colors.primary,
-  },
-  disabled: {
-    opacity: 0.6,
-  },
-  content: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  icon: {
-    marginHorizontal: 2,
-  },
-});
+export { Button, buttonTextVariants, buttonVariants };
+export type { ButtonProps };
